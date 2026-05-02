@@ -1,5 +1,11 @@
 # commute_web_service
 
+<실행시 참고사항>
+1. venv/bin/activate 또는 source venv/bin/activate 로 가상환경 진입
+2. 터미널에 있는 경로 앞 '(venv)'이 생성됨을 확인 후 진행
+3. uvicorn app.main:app --reload 오류시, ls 명령어로 안에 app 폴더가 보이는지 확인 (app.py X)
+
+
 <백엔드 디렉토리 구성>
 1. app/main.py
     FastAPI 실행 시작점
