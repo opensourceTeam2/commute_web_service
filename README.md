@@ -28,6 +28,6 @@ pip install -r requirements.txt 순차적으로 실행
 <프론트엔드 디렉토리 구성>
 ## 참고한 오픈소스
 
-- Repository: kaderbrl/landing-page-react
+- Repository: marqbeniamin/argon-design-system-react
 - License: MIT License
-- Usage: React 기반 여행 랜딩 페이지 구조를 참고하여 통학 경로 추천 서비스 홈 화면으로 수정함
+- Usage: React 기반 페이지 구조를 참고하여 통학 경로 추천 서비스 홈 화면으로 수정함
