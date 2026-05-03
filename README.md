@@ -1,8 +1,8 @@
 # commute_web_service
 
 <실행시 참고사항>
-1. python -m venv venv
-source venv/bin/activate
+1. python -m venv venv \n
+source venv/bin/activate \n
 pip install -r requirements.txt 순차적으로 실행
 2. venv/bin/activate 또는 source venv/bin/activate 로 가상환경 진입
 3. 터미널에 있는 경로 앞 '(venv)'이 생성됨을 확인 후 진행
