@@ -1,9 +1,12 @@
 # commute_web_service
 
 <실행시 참고사항>
-1. venv/bin/activate 또는 source venv/bin/activate 로 가상환경 진입
-2. 터미널에 있는 경로 앞 '(venv)'이 생성됨을 확인 후 진행
-3. uvicorn app.main:app --reload 오류시, ls 명령어로 안에 app 폴더가 보이는지 확인 (app.py X)
+1. python -m venv venv
+source venv/bin/activate
+pip install -r requirements.txt 순차적으로 실행
+2. venv/bin/activate 또는 source venv/bin/activate 로 가상환경 진입
+3. 터미널에 있는 경로 앞 '(venv)'이 생성됨을 확인 후 진행
+4. uvicorn app.main:app --reload 오류시, ls 명령어로 안에 app 폴더가 보이는지 확인 (app.py X)
 
 
 <백엔드 디렉토리 구성>
