@@ -26,4 +26,8 @@ pip install -r requirements.txt 순차적으로 실행
     DB 연결 설정을 관리하는 디렉토리
 
 <프론트엔드 디렉토리 구성>
-1. (구상중)
+## 참고한 오픈소스
+
+- Repository: kaderbrl/landing-page-react
+- License: MIT License
+- Usage: React 기반 여행 랜딩 페이지 구조를 참고하여 통학 경로 추천 서비스 홈 화면으로 수정함
