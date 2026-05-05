@@ -23,22 +23,58 @@ import "assets/vendor/nucleo/css/nucleo.css";
 import "assets/vendor/font-awesome/css/font-awesome.min.css";
 import "assets/scss/argon-design-system-react.scss?v1.1.0";
 
-import Index from "views/Index.js";
 import Landing from "views/examples/Landing.js";
 import Login from "views/examples/Login.js";
-import Profile from "views/examples/Profile.js";
-import Register from "views/examples/Register.js";
+import Commute from "views/examples/Commute.js";
+import Settings from "views/examples/Settings.js";
+import Logs from "views/Logs.js";
+
+// 로그인하지 않은 사용자를 /login으로 보냄
+function PrivateRoute({ children }) {
+  const isLoggedIn = localStorage.getItem("isLoggedIn") === "true";
+
+  if (!isLoggedIn) {
+    return <Navigate to="/login" replace />;
+  }
+
+  return children;
+}
 
 const root = ReactDOM.createRoot(document.getElementById("root"));
 
 root.render(
   <BrowserRouter>
     <Routes>
-      <Route path="/" exact element={<Index />} />
-      <Route path="/landing-page" exact element={<Landing />} />
-      <Route path="/login-page" exact element={<Login />} />
-      <Route path="/profile-page" exact element={<Profile />} />
-      <Route path="/register-page" exact element={<Register />} />
+      <Route path="/" element={<Landing />} />
+      <Route path="/login" element={<Login />} />
+
+      <Route
+        path="/commute"
+        element={
+          <PrivateRoute>
+            <Commute />
+          </PrivateRoute>
+        }
+      />
+
+      <Route
+        path="/settings"
+        element={
+          <PrivateRoute>
+            <Settings />
+          </PrivateRoute>
+        }
+      />
+
+      <Route
+        path="/logs"
+        element={
+          <PrivateRoute>
+            <Logs />
+          </PrivateRoute>
+        }
+      />
+
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
   </BrowserRouter>
