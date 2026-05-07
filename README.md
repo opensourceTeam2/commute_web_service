@@ -28,6 +28,27 @@ pip install -r requirements.txt 순차적으로 실행
 <프론트엔드 디렉토리 구성>
 ## 참고한 오픈소스
 
-- Repository: kaderbrl/landing-page-react
+- Repository: marqbeniamin/argon-design-system-react
 - License: MIT License
-- Usage: React 기반 여행 랜딩 페이지 구조를 참고하여 통학 경로 추천 서비스 홈 화면으로 수정함
+- Usage: React 기반 페이지 구조를 참고하여 통학 경로 추천 서비스 홈 화면으로 수정함
+
+1. scr/index.js
+- 주소 연결 + 로그인 제한 (로그인하지 않은 사용자가 네비게이션바의 기능을 사용할 시, 로그인 페이지로 연결함)
+
+2. src/components/Navbars/DemoNavbar.js
+- 상단 메뉴 [통학도우미(메인), 통학도우미 실행(메인기능), 설정(사용자 입력창), 로그(통학도우미 실행 기록 조회), 로그인(회원 정보 기입)]
+
+3. src/views/examples/Login.js
+- 로그인 화면 (사용자 아이디와 비번만 받음)
+
+4. src/views/examples/Settings.js
+- 설정 페이지(/settings) 정류장, 버스번호, 수업시작 시간 입력
+
+5. src/views/examples/Commute.js
+- 통학 도우미 실행 페이지 (결과 출력창) (API와 연결 예정)
+
+6. src/views/Logs.js
+- 로그 페이지
+
+7. src/views/examples/Landing.js
+- 메인화면 페이지
