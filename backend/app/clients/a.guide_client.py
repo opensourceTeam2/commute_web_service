@@ -65,7 +65,7 @@ def get_air_guide():
     params = {
         "serviceKey": PUBLIC_DATA_KEY,
         "returnType": "json",
-        "stationName": "수지", # 죽전 가장 가까운 측정소
+        "stationName": "수지", # 죽전과 가장 가까운 측정소
         "dataTerm": "DAILY",
         "ver": "1.0"
     }
