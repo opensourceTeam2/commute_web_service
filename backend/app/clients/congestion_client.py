@@ -3,10 +3,10 @@ from datetime import datetime
 
 # 인증키
 API_KEYS = {
-    "SUBWAY_CONGESTION": "6c664944506372793733586a577a47",   # 서울 데이터
-    "SUBWAY_PASSENGER": "576667566d6372793634694f586241",   # 서울 데이터
-    "BUS_ROUTE_USER": "0c34e25b766e4d05a986c105f048f0ae",   # 경기 데이터
-    "BUS_STATION_USER": "ef200b06485144e7a1cf5f55bd19fbbb"   # 경기 데이터
+    "SUBWAY_CONGESTION": "KEY",   # 서울 데이터
+    "SUBWAY_PASSENGER": "KEY",   # 서울 데이터
+    "BUS_ROUTE_USER": "KEY",   # 경기 데이터
+    "BUS_STATION_USER": "KEY"   # 경기 데이터
 }
 
 def get_congestion_weight(station_nm="죽전", bus_route_id="233000031"):

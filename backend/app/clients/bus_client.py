@@ -2,7 +2,7 @@ import requests
 import xml.etree.ElementTree as ET
 
 # 공공데이터포털 인증키
-API_KEY = "1ece7d5a0ede503b80498ab64c86c4e0d219707cc99d7ff4479843f619b6abd0"
+API_KEY = "KEY"
 
 def get_realtime_24_bus():
     # 우리가 찾은 죽전역.수지레스피아 정류소 ID

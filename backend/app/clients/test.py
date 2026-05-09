@@ -1,7 +1,7 @@
 import requests
 
 # [서울열린데이터광장] 시간대별 역별 승하차인원 인증키
-SEOUL_DATA_KEY = "64445a6d71637279383553656b4247"
+SEOUL_DATA_KEY = "KEY"
 
 def get_fever_time_analysis(station_name, current_hour):
     """

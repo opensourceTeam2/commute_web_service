@@ -12,7 +12,7 @@ def get_day_status():
     # 공휴일 체크
     url = "http://apis.data.go.kr/B090041/openapi/service/SpcdeInfoService/getRestDeInfo"
     params = {
-        "serviceKey": "1ece7d5a0ede503b80498ab64c86c4e0d219707cc99d7ff4479843f619b6abd0",
+        "serviceKey": "KEY",
         "solYear": now.strftime('%Y'),
         "solMonth": now.strftime('%m'),
         "_type": "json"

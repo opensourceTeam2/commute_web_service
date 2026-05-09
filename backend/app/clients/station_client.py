@@ -1,6 +1,6 @@
 import requests
 
-# 인증키 (수정님의 키 그대로)
+# 인증키
 GYEONGGI_KEY = "f3589e2f0e154c6ab44348a527ffe283"
 RAIL_API_KEY = "$2a$10$crFZ6BOcvthSaMBJtsVveeqCHOep1xGf5uJGVcVtlrITmFo4aO7rO"
 

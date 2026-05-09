@@ -1,7 +1,7 @@
 import requests
 from datetime import datetime
 
-STAT_KEY = "576667566d6372793634694f586241"
+STAT_KEY = "KEY"
 
 def get_seat_analysis(current_station, direction="하행"):
     """

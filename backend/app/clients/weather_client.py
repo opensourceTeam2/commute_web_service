@@ -41,7 +41,7 @@ def get_weather_forecast():
         base_time = "2300"
 
     params = {
-        "serviceKey": "1ece7d5a0ede503b80498ab64c86c4e0d219707cc99d7ff4479843f619b6abd0",
+        "serviceKey": "KEY",
         "dataType": "JSON",
         "base_date": base_date, 
         "base_time": base_time,
@@ -70,7 +70,7 @@ def get_air_pollution_now():
     """실시간 미세먼지 정보"""
     url = "http://apis.data.go.kr/B552584/ArpltnInforInqireSvc/getMsrstnAcctoRltmMesureDnsty"
     params = {
-        "serviceKey": "1ece7d5a0ede503b80498ab64c86c4e0d219707cc99d7ff4479843f619b6abd0",
+        "serviceKey": "KEY",
         "returnType": "json", "stationName": "수지", "dataTerm": "DAILY", "ver": "1.0"
     }
     

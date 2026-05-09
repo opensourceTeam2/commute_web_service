@@ -1,7 +1,7 @@
 import requests
 
 # 인증키
-SEOUL_DATA_KEY = "64445a6d71637279383553656b4247"
+SEOUL_DATA_KEY = "KEY"
 
 def get_fever_times_safe():
     service_name = "CardSubwayTime"

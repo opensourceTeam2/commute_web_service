@@ -1,8 +1,8 @@
 import requests
 from datetime import datetime
 
-SEOUL_DATA_KEY = "64445a6d71637279383553656b4247"
-PUBLIC_DATA_KEY = "1ece7d5a0ede503b80498ab64c86c4e0d219707cc99d7ff4479843f619b6abd0"
+SEOUL_DATA_KEY = "KEY"
+PUBLIC_DATA_KEY = "KEY"
 
 def get_late_probability(station_name, current_hour):
     target_date = datetime.now().strftime('%Y%m%d')

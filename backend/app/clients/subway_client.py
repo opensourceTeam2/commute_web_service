@@ -2,8 +2,8 @@ import requests
 
 # 인증키
 KEYS = {
-    "ARRIVAL": "79486f6e4363727932386d664c6773",   # 실시간 도착정보
-    "POSITION": "6474576f686372793733434b746e75"   # 실시간 열차 위치정보
+    "ARRIVAL": "KEY",   # 실시간 도착정보
+    "POSITION": "KEY"   # 실시간 열차 위치정보
 }
 
 def get_subway_status_v2(station_nm="죽전"):
