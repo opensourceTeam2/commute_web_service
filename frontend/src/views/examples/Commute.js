@@ -48,43 +48,45 @@ class Commute extends React.Component {
     return JSON.parse(localStorage.getItem(settingsKey)) || null;
   };
 
-  handleCalculate = () => {
+  handleCalculate = async () => {
     const settings = this.getSettings();
 
     if (!settings) {
       return;
     }
 
-    const arrivalMinutes = Math.floor(Math.random() * 20) + 1;
-    const lateProbability = Math.floor(Math.random() * 70) + 10;
+    try {
+      const loginId = localStorage.getItem("loginId") || "guest";
 
-    let statusMessage = "";
+      const response = await fetch("http://127.0.0.1:8000/api/commute/calculate", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          busStop: settings.busStop,
+          busNumber: settings.busNumber,
+          classStartTime: settings.classStartTime,
+          loginId: loginId,
+        }),
+      });
 
-    if (lateProbability >= 70) {
-      statusMessage = "지각 위험이 높습니다. 조금 더 빨리 출발하는 것이 좋습니다.";
-    } else if (lateProbability >= 40) {
-      statusMessage = "지각 가능성이 있습니다. 버스 도착 시간을 주의해서 확인하세요.";
-    } else {
-      statusMessage = "현재 기준으로는 지각 위험이 낮습니다.";
+      const result = await response.json();
+
+      if (!response.ok) {
+        alert(result.detail || "통학 계산에 실패했습니다.");
+        return;
+      }
+
+      this.setState({ result });
+
+      const logsKey = `commuteLogs_${loginId}`;
+      const savedLogs = JSON.parse(localStorage.getItem(logsKey)) || [];
+      localStorage.setItem(logsKey, JSON.stringify([result, ...savedLogs]));
+    } catch (error) {
+      console.error(error);
+      alert("백엔드 서버와 연결하지 못했습니다. 백엔드가 실행 중인지 확인해주세요.");
     }
-
-    const result = {
-      busStop: settings.busStop,
-      busNumber: settings.busNumber,
-      classStartTime: settings.classStartTime,
-      arrivalMinutes,
-      lateProbability,
-      statusMessage,
-      checkedAt: new Date().toLocaleString(),
-    };
-
-    this.setState({ result });
-
-    const loginId = localStorage.getItem("loginId") || "guest";
-    const logsKey = `commuteLogs_${loginId}`;
-    const savedLogs = JSON.parse(localStorage.getItem(logsKey)) || [];
-
-    localStorage.setItem(logsKey, JSON.stringify([result, ...savedLogs]));
   };
 
   render() {

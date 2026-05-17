@@ -1,12 +1,10 @@
 # commute_web_service
 
-<실행시 참고사항>
-1. python -m venv venv \n
-source venv/bin/activate \n
-pip install -r requirements.txt 순차적으로 실행
-2. venv/bin/activate 또는 source venv/bin/activate 로 가상환경 진입
-3. 터미널에 있는 경로 앞 '(venv)'이 생성됨을 확인 후 진행
-4. uvicorn app.main:app --reload 오류시, ls 명령어로 안에 app 폴더가 보이는지 확인 (app.py X)
+<실행 방법>
+1. python venv 가상환경 실행, 터미널에 있는 경로 앞 '(venv)'이 생성됨을 확인 후 진행
+2. pip install -r requirements.txt로 필요한 패키지 다운로드
+3. uvicorn app.main:app --reload (Backend 실행)
+4. npm start (Frontend 실행)
 
 
 <백엔드 디렉토리 구성>
@@ -52,3 +50,6 @@ pip install -r requirements.txt 순차적으로 실행
 
 7. src/views/examples/Landing.js
 - 메인화면 페이지
+
+## 참고한 API
+1. 
