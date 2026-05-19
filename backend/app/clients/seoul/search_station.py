@@ -1,84 +1,96 @@
-import requests
-
-
-from bus_api import SERVICE_KEY
+from bus_api import (
+    get_route_stations
+)
 
 
 # 정류장 검색
-def search_station(station_name):
+def search_station(
 
-    url = (
-        "http://ws.bus.go.kr/api/rest/"
-        "stationinfo/getStationByName"
+    route_id,
+    keyword
+
+):
+
+    stations = get_route_stations(
+        route_id
     )
 
-    params = {
 
-        "ServiceKey": SERVICE_KEY,
-        "stSrch": station_name,
-        "resultType": "json"
-
-    }
-
-    response = requests.get(
-        url,
-        params=params
+    route_stations = (
+        stations
+        .get("msgBody", {})
+        .get("itemList", [])
     )
 
-    print("\n[정류장검색 URL]")
-    print(response.url)
 
-    print("\n[정류장검색 응답]")
-    print(response.text)
+    # 데이터 1개일 경우
+    if isinstance(
+        route_stations,
+        dict
+    ):
 
-    data = response.json()
+        route_stations = [
+            route_stations
+        ]
 
-    try:
 
-        item_list = (
-            data["msgBody"]
-            ["itemList"]
+    result = []
+
+
+    for station in route_stations:
+
+
+        name = station.get(
+            "stationNm",
+            ""
         )
 
-        # 결과 1개 처리
-        if isinstance(item_list, dict):
 
-            item_list = [item_list]
+        # 검색어 포함 여부
+        if keyword in name:
 
-        result = []
-
-        for item in item_list:
 
             result.append({
 
-                "station_name": item["stNm"],
+                "stationName":
+                name,
 
-                "station_id": item["stId"],
+                "stationSeq":
+                station.get(
+                    "seq"
+                ),
 
-                "ars_id": item["arsId"],
+                "stationId":
+                station.get(
+                    "station"
+                ),
 
-                "gps_x": item["tmX"],
-
-                "gps_y": item["tmY"]
-
+                "arsId":
+                station.get(
+                    "arsId"
+                )
             })
 
-        return result
 
-    except:
+    return result
 
-        return {
-            "error": "정류장을 찾을 수 없습니다"
-        }
 
 
 # 테스트 코드
 if __name__ == "__main__":
 
-    print("\n===== 서울 정류장 검색 =====\n")
+
+    # 241번 route_id
+    route_id = "100100595"
+
 
     result = search_station(
-        "강남역"
+        route_id,
+        "청량리"
+
     )
+
+
+    print("\n===== 서울 정류장 검색 =====\n")
 
     print(result)
