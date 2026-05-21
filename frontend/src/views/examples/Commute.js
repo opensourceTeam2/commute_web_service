@@ -1,23 +1,4 @@
-/*!
-
-=========================================================
-* Argon Design System React - v1.1.2
-=========================================================
-
-* Product Page: https://www.creative-tim.com/product/argon-design-system-react
-* Copyright 2023 Creative Tim (https://www.creative-tim.com)
-* Licensed under MIT (https://github.com/creativetimofficial/argon-design-system-react/blob/master/LICENSE.md)
-
-* Coded by Creative Tim
-
-=========================================================
-
-* The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
-
-*/
 import React from "react";
-import { Link } from "react-router-dom";
-
 import {
   Button,
   Card,
@@ -25,6 +6,11 @@ import {
   Container,
   Row,
   Col,
+  Form,
+  FormGroup,
+  Label,
+  Input,
+  Spinner,
 } from "reactstrap";
 
 import DemoNavbar from "components/Navbars/DemoNavbar.js";
@@ -32,7 +18,11 @@ import SimpleFooter from "components/Footers/SimpleFooter.js";
 
 class Commute extends React.Component {
   state = {
+    startLocation: "",
+    classStartPeriod: "오전",
+    classStartClock: "",
     result: null,
+    loading: false,
   };
 
   componentDidMount() {
@@ -41,32 +31,46 @@ class Commute extends React.Component {
     this.refs.main.scrollTop = 0;
   }
 
-  getSettings = () => {
-    const loginId = localStorage.getItem("loginId") || "guest";
-    const settingsKey = `commuteSettings_${loginId}`;
+  getTimeOptions = () => {
+    const times = [];
 
-    return JSON.parse(localStorage.getItem(settingsKey)) || null;
+    for (let hour = 1; hour <= 12; hour++) {
+      const paddedHour = String(hour).padStart(2, "0");
+      times.push(`${paddedHour}:00`);
+      times.push(`${paddedHour}:30`);
+    }
+
+    return times;
   };
 
-  handleCalculate = async () => {
-    const settings = this.getSettings();
+  handleCalculate = async (event) => {
+    event.preventDefault();
 
-    if (!settings) {
+    const { startLocation, classStartPeriod, classStartClock } = this.state;
+
+    if (
+      startLocation.trim() === "" ||
+      classStartPeriod.trim() === "" ||
+      classStartClock.trim() === ""
+    ) {
+      alert("출발 위치와 수업 시작 시간을 모두 입력해주세요.");
       return;
     }
 
-    try {
-      const loginId = localStorage.getItem("loginId") || "guest";
+    const classStartTime = `${classStartPeriod} ${classStartClock}`;
+    const loginId = localStorage.getItem("loginId") || "guest";
 
+    this.setState({ loading: true, result: null });
+
+    try {
       const response = await fetch("http://127.0.0.1:8000/api/commute/calculate", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          busStop: settings.busStop,
-          busNumber: settings.busNumber,
-          classStartTime: settings.classStartTime,
+          startLocation: startLocation,
+          classStartTime: classStartTime,
           loginId: loginId,
         }),
       });
@@ -75,10 +79,14 @@ class Commute extends React.Component {
 
       if (!response.ok) {
         alert(result.detail || "통학 계산에 실패했습니다.");
+        this.setState({ loading: false });
         return;
       }
 
-      this.setState({ result });
+      this.setState({
+        result: result,
+        loading: false,
+      });
 
       const logsKey = `commuteLogs_${loginId}`;
       const savedLogs = JSON.parse(localStorage.getItem(logsKey)) || [];
@@ -86,16 +94,69 @@ class Commute extends React.Component {
     } catch (error) {
       console.error(error);
       alert("백엔드 서버와 연결하지 못했습니다. 백엔드가 실행 중인지 확인해주세요.");
+      this.setState({ loading: false });
     }
   };
 
+  renderRouteCard = (route) => {
+    return (
+      <Card className="shadow mb-4" key={route.rank}>
+        <CardBody>
+          <h4 className="mb-3">
+            추천 경로 {route.rank}
+          </h4>
+
+          <p className="mb-2">
+            <strong>경로:</strong> {route.routeSummary}
+          </p>
+
+          <p className="mb-2">
+            <strong>예상 소요 시간:</strong> {route.totalMinutes}분
+          </p>
+
+          <p className="mb-2">
+            <strong>예상 도착 시간:</strong> {route.expectedArrivalTime}
+          </p>
+
+          <p className="mb-2">
+            <strong>환승 횟수:</strong> {route.transferCount}회
+          </p>
+
+          <p className="mb-2">
+            <strong>지각 확률:</strong> {route.lateProbability}%
+          </p>
+
+          <p className="mb-3">
+            <strong>안내:</strong> {route.statusMessage}
+          </p>
+
+          <hr />
+
+          <h6>상세 이동 순서</h6>
+          <ol>
+            {route.steps.map((step, index) => (
+              <li key={index}>{step}</li>
+            ))}
+          </ol>
+
+          {route.reasons && route.reasons.length > 0 && (
+            <>
+              <h6>계산 이유</h6>
+              <ul>
+                {route.reasons.map((reason, index) => (
+                  <li key={index}>{reason}</li>
+                ))}
+              </ul>
+            </>
+          )}
+        </CardBody>
+      </Card>
+    );
+  };
+
   render() {
-    const settings = this.getSettings();
-    const hasSettings =
-      settings &&
-      settings.busStop &&
-      settings.busNumber &&
-      settings.classStartTime;
+    const timeOptions = this.getTimeOptions();
+    const { result, loading } = this.state;
 
     return (
       <>
@@ -119,101 +180,103 @@ class Commute extends React.Component {
                 <Col lg="8">
                   <Card className="bg-secondary shadow border-0">
                     <CardBody className="px-lg-5 py-lg-5">
-                      <div className="text-center mb-4">
-                        <h3 className="font-weight-bold">통학 도우미 실행</h3>
-                        <p className="text-muted">
-                          설정한 통학 정보를 기준으로 버스 도착 예정 시간과
-                          지각 확률을 계산합니다.
-                        </p>
-                      </div>
+                      <h3 className="mb-4">통학 도우미 실행</h3>
 
-                      {!hasSettings ? (
-                        <div className="text-center">
-                          <p>
-                            통학 도우미를 실행하려면 먼저 설정 페이지에서
-                            정류장, 버스 번호, 수업 시작 시간을 입력해야 합니다.
-                          </p>
+                      <p>
+                        출발 위치와 수업 시작 시간을 입력하면 단국대학교까지 갈 수 있는
+                        경로 중 지각 확률이 낮은 3가지를 추천합니다.
+                      </p>
 
-                          <Button color="primary" tag={Link} to="/settings">
-                            설정하러 가기
-                          </Button>
-                        </div>
-                      ) : (
-                        <>
-                          <Row className="mb-4">
+                      <Form onSubmit={this.handleCalculate}>
+                        <FormGroup>
+                          <Label>출발 위치</Label>
+                          <Input
+                            type="text"
+                            placeholder="예: 미금역, 죽전역, 수지구청역, 강남역"
+                            value={this.state.startLocation}
+                            onChange={(e) =>
+                              this.setState({ startLocation: e.target.value })
+                            }
+                          />
+                        </FormGroup>
+
+                        <FormGroup>
+                          <Label>수업 시작 시간</Label>
+                          <Row>
                             <Col md="4">
-                              <Card className="shadow-sm border-0 mb-3">
-                                <CardBody>
-                                  <small className="text-muted">정류장</small>
-                                  <h5 className="mb-0">{settings.busStop}</h5>
-                                </CardBody>
-                              </Card>
+                              <Input
+                                type="select"
+                                value={this.state.classStartPeriod}
+                                onChange={(e) =>
+                                  this.setState({
+                                    classStartPeriod: e.target.value,
+                                  })
+                                }
+                              >
+                                <option value="오전">오전</option>
+                                <option value="오후">오후</option>
+                              </Input>
                             </Col>
 
-                            <Col md="4">
-                              <Card className="shadow-sm border-0 mb-3">
-                                <CardBody>
-                                  <small className="text-muted">버스 번호</small>
-                                  <h5 className="mb-0">{settings.busNumber}</h5>
-                                </CardBody>
-                              </Card>
-                            </Col>
-
-                            <Col md="4">
-                              <Card className="shadow-sm border-0 mb-3">
-                                <CardBody>
-                                  <small className="text-muted">
-                                    수업 시작 시간
-                                  </small>
-                                  <h5 className="mb-0">
-                                    {settings.classStartTime}
-                                  </h5>
-                                </CardBody>
-                              </Card>
+                            <Col md="8">
+                              <Input
+                                type="select"
+                                value={this.state.classStartClock}
+                                onChange={(e) =>
+                                  this.setState({
+                                    classStartClock: e.target.value,
+                                  })
+                                }
+                              >
+                                <option value="">시간을 선택하세요</option>
+                                {timeOptions.map((time) => (
+                                  <option key={time} value={time}>
+                                    {time}
+                                  </option>
+                                ))}
+                              </Input>
                             </Col>
                           </Row>
+                        </FormGroup>
 
-                          <div className="text-center">
-                            <Button
-                              color="primary"
-                              onClick={this.handleCalculate}
-                            >
-                              결과 계산하기
-                            </Button>
-                          </div>
-
-                          {this.state.result && (
-                            <Card className="shadow mt-4">
-                              <CardBody>
-                                <h4 className="font-weight-bold mb-3">
-                                  조회 결과
-                                </h4>
-
-                                <p>
-                                  <strong>버스 도착 예정 시간:</strong> 약{" "}
-                                  {this.state.result.arrivalMinutes}분 후
-                                </p>
-
-                                <p>
-                                  <strong>지각 확률:</strong>{" "}
-                                  {this.state.result.lateProbability}%
-                                </p>
-
-                                <p>
-                                  <strong>안내 문구:</strong>{" "}
-                                  {this.state.result.statusMessage}
-                                </p>
-
-                                <p className="text-muted mb-0">
-                                  조회 시간: {this.state.result.checkedAt}
-                                </p>
-                              </CardBody>
-                            </Card>
+                        <Button color="primary" type="submit" disabled={loading}>
+                          {loading ? (
+                            <>
+                              <Spinner size="sm" /> 계산 중...
+                            </>
+                          ) : (
+                            "경로 추천받기"
                           )}
-                        </>
-                      )}
+                        </Button>
+                      </Form>
                     </CardBody>
                   </Card>
+
+                  {result && (
+                    <div className="mt-5">
+                      <h3 className="text-white mb-4">추천 결과</h3>
+
+                      <Card className="shadow mb-4">
+                        <CardBody>
+                          <p>
+                            <strong>출발 위치:</strong> {result.startLocation}
+                          </p>
+                          <p>
+                            <strong>도착지:</strong> {result.destination}
+                          </p>
+                          <p>
+                            <strong>수업 시작 시간:</strong>{" "}
+                            {result.classStartTime}
+                          </p>
+                          <p>
+                            <strong>조회 시간:</strong> {result.checkedAt}
+                          </p>
+                        </CardBody>
+                      </Card>
+
+                      {result.routes.map((route) => this.renderRouteCard(route))}
+                    </div>
+                  )}
                 </Col>
               </Row>
             </Container>

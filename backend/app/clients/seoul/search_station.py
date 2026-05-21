@@ -1,6 +1,4 @@
-from bus_api import (
-    get_route_stations
-)
+from app.clients.seoul.bus_api import get_route_stations
 
 
 # 정류장 검색

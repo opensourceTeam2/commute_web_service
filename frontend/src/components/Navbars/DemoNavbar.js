@@ -114,12 +114,6 @@ class DemoNavbar extends React.Component {
                   </NavItem>
 
                   <NavItem>
-                    <NavLink tag={Link} to="/settings">
-                      설정
-                    </NavLink>
-                  </NavItem>
-
-                  <NavItem>
                     <NavLink tag={Link} to="/logs">
                       로그
                     </NavLink>

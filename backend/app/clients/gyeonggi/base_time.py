@@ -1,4 +1,4 @@
-from bus_api import get_route_stations
+from app.clients.gyeonggi.bus_api import get_route_stations
 
 
 # 정류장 하나당 평균 이동 시간(분)

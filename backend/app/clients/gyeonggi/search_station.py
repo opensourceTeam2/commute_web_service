@@ -1,4 +1,4 @@
-from bus_api import get_route_stations
+from app.clients.gyeonggi.bus_api import get_route_stations
 
 
 def search_station(route_id, keyword):

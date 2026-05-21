@@ -83,13 +83,29 @@ class Logs extends React.Component {
                           <thead>
                             <tr>
                               <th>조회 시간</th>
-                              <th>정류장</th>
-                              <th>버스 번호</th>
+                              <th>출발 위치</th>
                               <th>수업 시작 시간</th>
-                              <th>도착 예정</th>
+                              <th>추천 1순위 경로</th>
+                              <th>예상 소요 시간</th>
                               <th>지각 확률</th>
                             </tr>
                           </thead>
+                          <tbody>
+                            {logs.map((log, index) => {
+                              const bestRoute = log.routes && log.routes.length > 0 ? log.routes[0] : null;
+
+                              return (
+                                <tr key={index}>
+                                  <td>{log.checkedAt}</td>
+                                  <td>{log.startLocation}</td>
+                                  <td>{log.classStartTime}</td>
+                                  <td>{bestRoute ? bestRoute.routeSummary : "-"}</td>
+                                  <td>{bestRoute ? `${bestRoute.totalMinutes}분` : "-"}</td>
+                                  <td>{bestRoute ? `${bestRoute.lateProbability}%` : "-"}</td>
+                                </tr>
+                              );
+                            })}
+                          </tbody>
 
                           <tbody>
                             {logs.map((log, index) => (

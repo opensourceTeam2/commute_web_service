@@ -1,8 +1,7 @@
+from app.clients.api_keys import WEATHER_API_KEY
 import requests
 from datetime import datetime
 
-
-SERVICE_KEY = "KEY"
 
 
 def get_weather(nx, ny):
@@ -24,7 +23,7 @@ def get_weather(nx, ny):
 
     params = {
 
-        "serviceKey": SERVICE_KEY,
+        "serviceKey": WEATHER_API_KEY,
 
         "pageNo": 1,
 
