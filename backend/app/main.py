@@ -3,6 +3,8 @@ from datetime import datetime, timedelta
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
+from fastapi.staticfiles import StaticFiles
+from fastapi.responses import FileResponse
 
 from app.clients.gyeonggi.bus_api import (
     get_route_info,
@@ -13,6 +15,9 @@ from app.clients.weather import get_weather
 
 
 app = FastAPI()
+
+# 미니게임
+app.mount("/static", StaticFiles(directory="app/static"), name="static")
 
 # React 프론트엔드에서 FastAPI 백엔드로 요청할 수 있게 허용
 app.add_middleware(
@@ -365,3 +370,7 @@ def calculate_commute(request: CommuteRequest):
             status_code=500,
             detail=f"통학 계산 중 오류가 발생했습니다: {error}",
         )
+        
+@app.get("/game")
+def game():
+    return FileResponse("app/templates/game.html")
