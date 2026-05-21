@@ -1,8 +1,5 @@
+from app.clients.api_keys import SEOUL_BUS_API_KEY
 import requests
-
-
-# 공공데이터포털 인증키
-SERVICE_KEY = ("KEY")
 
 
 # 1️⃣ 버스 노선 조회
@@ -17,7 +14,7 @@ def get_route_info(
 
     params = {
 
-        "ServiceKey": SERVICE_KEY,
+        "ServiceKey": SEOUL_BUS_API_KEY,
         "strSrch": bus_number,
         "resultType": "json"
     }
@@ -43,7 +40,7 @@ def search_station(
 
     params = {
 
-        "ServiceKey": SERVICE_KEY,
+        "ServiceKey": SEOUL_BUS_API_KEY,
         "stSrch": station_name,
         "resultType": "json"
     }
@@ -69,7 +66,7 @@ def get_route_stations(
 
     params = {
 
-        "ServiceKey": SERVICE_KEY,
+        "ServiceKey": SEOUL_BUS_API_KEY,
         "busRouteId": route_id,
         "resultType": "json"
     }
@@ -95,7 +92,7 @@ def get_bus_location(
 
     params = {
 
-        "ServiceKey": SERVICE_KEY,
+        "ServiceKey": SEOUL_BUS_API_KEY,
         "busRouteId": route_id,
         "resultType": "json"
     }
@@ -124,7 +121,7 @@ def get_arrival_info(
 
     params = {
 
-        "ServiceKey": SERVICE_KEY,
+        "ServiceKey": SEOUL_BUS_API_KEY,
         "stId": station_id,
         "busRouteId": route_id,
         "ord": order,

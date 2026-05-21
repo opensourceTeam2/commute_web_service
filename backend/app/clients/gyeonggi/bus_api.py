@@ -1,6 +1,5 @@
+from app.clients.api_keys import GYEONGGI_BUS_API_KEY
 import requests
-
-SERVICE_KEY = "KEY"
 
 
 # 1️⃣ 버스 노선 조회
@@ -13,7 +12,7 @@ def get_route_info(route_name):
     )
 
     params = {
-        "serviceKey": SERVICE_KEY,
+        "serviceKey": GYEONGGI_BUS_API_KEY,
         "keyword": route_name,
         "format": "json"
     }
@@ -33,7 +32,7 @@ def get_route_stations(route_id):
     )
 
     params = {
-        "serviceKey": SERVICE_KEY,
+        "serviceKey": GYEONGGI_BUS_API_KEY,
         "routeId": route_id,
         "format": "json"
     }
@@ -53,7 +52,7 @@ def get_realtime_arrival(station_id):
     )
 
     params = {
-        "serviceKey": SERVICE_KEY,
+        "serviceKey": GYEONGGI_BUS_API_KEY,
         "stationId": station_id,
         "format": "json"
     }
@@ -73,7 +72,7 @@ def get_bus_location(route_id):
     )
 
     params = {
-        "serviceKey": SERVICE_KEY,
+        "serviceKey": GYEONGGI_BUS_API_KEY,
         "routeId": route_id,
         "format": "json"
     }

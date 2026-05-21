@@ -1,8 +1,7 @@
+from app.clients.api_keys import SUBWAY_API_KEY
 import requests
 
 
-# 서울 열린데이터광장 지하철 인증키
-SERVICE_KEY = "KEY"
 
 
 # 1️⃣ 지하철 실시간 도착 정보
@@ -10,7 +9,7 @@ def get_realtime_arrival(station_name):
 
     url = (
         f"http://swopenapi.seoul.go.kr/api/subway/"
-        f"{SERVICE_KEY}/json/"
+        f"{SUBWAY_API_KEY}/json/"
         f"realtimeStationArrival/0/20/"
         f"{station_name}"
     )
@@ -25,7 +24,7 @@ def get_realtime_position(line_name):
 
     url = (
         f"http://swopenapi.seoul.go.kr/api/subway/"
-        f"{SERVICE_KEY}/json/"
+        f"{SUBWAY_API_KEY}/json/"
         f"realtimePosition/0/20/"
         f"{line_name}"
     )

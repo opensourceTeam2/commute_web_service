@@ -1,6 +1,4 @@
-from bus_api import (
-    get_arrival_info
-)
+from app.clients.seoul.bus_api import get_arrival_info
 
 
 # 실시간 버스 조회

@@ -26,7 +26,6 @@ import "assets/scss/argon-design-system-react.scss?v1.1.0";
 import Landing from "views/examples/Landing.js";
 import Login from "views/examples/Login.js";
 import Commute from "views/examples/Commute.js";
-import Settings from "views/examples/Settings.js";
 import Logs from "views/Logs.js";
 
 // 로그인하지 않은 사용자를 /login으로 보냄
@@ -53,15 +52,6 @@ root.render(
         element={
           <PrivateRoute>
             <Commute />
-          </PrivateRoute>
-        }
-      />
-
-      <Route
-        path="/settings"
-        element={
-          <PrivateRoute>
-            <Settings />
           </PrivateRoute>
         }
       />

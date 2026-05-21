@@ -1,4 +1,4 @@
-from bus_api import get_realtime_arrival
+from app.clients.gyeonggi.bus_api import get_realtime_arrival
 
 
 # 실시간 버스 조회
