@@ -6,6 +6,9 @@
 3. uvicorn app.main:app --reload (Backend 실행)
 4. npm start (Frontend 실행)
 
+<주의>
+1. ODSAY_API_KEY는 조장 김영재에게 실행할 PC의 아이피를 알려줘야지 KEY 신청을 할 수 있음
+
 
 <백엔드 디렉토리 구성>
 1. app/main.py
