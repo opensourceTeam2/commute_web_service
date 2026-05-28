@@ -119,6 +119,12 @@ class DemoNavbar extends React.Component {
                     </NavLink>
                   </NavItem>
 
+                  <NavItem>
+                    <NavLink tag={Link} to="/badge">
+                      포인트 / 뱃지
+                    </NavLink>
+                  </NavItem>
+
                   <NavItem className="d-none d-lg-block ml-lg-4">
                     {!isLoggedIn ? (
                       <Button

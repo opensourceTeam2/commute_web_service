@@ -8,9 +8,22 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse
 
 from app.services.route_service import recommend_commute_routes
+from app.clients.extra.playlist import recommend_playlist
+from app.clients.extra.points import calculate_points
+from app.clients.extra.badges import update_badges
+from app.clients.weather import get_weather
 
 
 app = FastAPI()
+
+# 뱃지
+badge_data = {
+    "easy_success_count": 0,
+    "hard_success_count": 0,
+    "rain_success_count": 0,
+    "early_morning_count": 0,
+    "long_distance_count": 0
+}
 
 # 미니게임
 app.mount("/static", StaticFiles(directory="app/static"), name="static")
@@ -80,3 +93,140 @@ def calculate_commute(request: CommuteCalculateRequest):
 @app.get("/game")
 def game():
     return FileResponse("app/templates/game.html")
+
+@app.get("/playlist")
+def playlist(
+    late_probability: int
+):
+
+    # 용인 좌표
+    nx = 62
+    ny = 123
+
+    weather_result = get_weather(
+        nx,
+        ny
+    )
+
+    rain_type = "없음"
+
+    if weather_result:
+
+        rain_type = weather_result[0][
+            "rain_type"
+        ]
+
+    current_hour = datetime.now().hour
+
+    playlist_result = recommend_playlist(
+        rain_type=rain_type,
+        late_probability=late_probability,
+        current_hour=current_hour
+    )
+
+    return {
+        "playlist": playlist_result
+    }
+    
+@app.get("/points")
+def points(
+    late_probability: int,
+    commute_minutes: int,
+    class_start_time: str
+):
+
+    # 용인 좌표
+    nx = 62
+    ny = 123
+
+    weather_result = get_weather(nx, ny)
+
+    if len(weather_result) > 0:
+        rain_type = weather_result[0]["rain_type"]
+    else:
+        rain_type = "없음"
+
+    current_hour = datetime.now().hour
+    
+    now = datetime.now()
+
+    current_minutes = (
+        now.hour * 60
+        + now.minute
+    )
+    
+    period, time_str = class_start_time.split()
+
+    hour, minute = map(
+        int,
+       time_str.split(":")
+    )
+
+    if period == "오후" and hour != 12:
+        hour += 12
+    if period == "오전" and hour == 12:
+        hour = 0
+
+    class_minutes = (
+        hour * 60
+        + minute
+    )
+    
+    is_on_time = (
+        current_minutes <= class_minutes
+    )
+    
+    is_rush_hour = (
+        7 <= current_hour < 9
+        or
+        17 <= current_hour < 19
+    )
+
+    result = calculate_points(
+        late_probability=late_probability,
+        rain_type=rain_type,
+        is_rush_hour=is_rush_hour,
+        is_arrived=is_on_time
+    )
+
+    badge_result = update_badges(
+        badge_data=badge_data,
+        late_probability=late_probability,
+        rain_type=rain_type,
+        current_hour=current_hour,
+        commute_minutes=commute_minutes,
+        is_on_time=is_on_time
+    )
+
+    return {
+    "point_result":
+    result,
+    "badge_result":
+    badge_result
+    }
+
+@app.get("/badge")
+def badge():
+
+    badge_list = []
+
+    if badge_data["easy_success_count"] >= 30:
+        badge_list.append("여유로운 통학의 신")
+
+    if badge_data["hard_success_count"] >= 10:
+        badge_list.append("아슬아슬 마스터")
+
+    if badge_data["rain_success_count"] >= 10:
+        badge_list.append("비를 뚫는 자")
+
+    if badge_data["early_morning_count"] >= 20:
+        badge_list.append("새벽 통학생")
+
+    if badge_data["long_distance_count"] >= 20:
+        badge_list.append("강철 체력")
+        
+    return {
+        **badge_data,
+        "badge_list": badge_list,
+        "badge_count": len(badge_list),
+    }

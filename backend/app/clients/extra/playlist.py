@@ -1,10 +1,7 @@
 import random
 from googleapiclient.discovery import build
-
-
-# 발급받은 API KEY
-API_KEY = "AIzaSyABs4wWeNnwPTkYtrpwdTIdlTYD_xTg104"
-
+import html
+from api_keys import YOUTUBE_API_KEY
 
 # YouTube API 연결
 youtube = build(
@@ -12,33 +9,27 @@ youtube = build(
     "youtube",
     "v3",
 
-    developerKey=API_KEY
+    developerKey=YOUTUBE_API_KEY
 )
 
 
 # 유튜브 플레이리스트 검색
 
 def get_playlist(
-
     keyword,
-
     count
 ):
 
     request = youtube.search().list(
-
         q=keyword,
-
         part="snippet",
-
         type="video",
-
         maxResults=20
     )
 
 
     response = request.execute()
-
+    print(response)
 
     result = []
 
@@ -47,7 +38,9 @@ def get_playlist(
 
         video_id = item["id"]["videoId"]
 
-        title = item["snippet"]["title"]
+        title = html.unescape(
+        item["snippet"]["title"]
+        )
 
         channel = item["snippet"]["channelTitle"]
 
@@ -66,20 +59,15 @@ def get_playlist(
         result.append({
 
             "title": title,
-
             "channel": channel,
-
             "url": url,
-
             "thumbnail": thumbnail
         })
 
 
     # 검색 결과 중 랜덤 추천
     return random.sample(
-
         result,
-
         min(count, len(result))
     )
 
@@ -88,27 +76,35 @@ def get_playlist(
 
 def recommend_playlist(
 
-    rain_probability,
+    rain_type,
     late_probability,
     current_hour
 
 ):
 
     final_playlist = []
-
     active_conditions = []
 
 
     # 비 오는 날
 
-    if rain_probability >= 80:
+    if rain_type == "비":
 
         active_conditions.append({
-
             "type": "rain",
-
             "keyword":
             "비 오는 날 감성 플리"
+        })
+
+
+    # 눈 오는 날
+
+    if rain_type == "눈":
+
+        active_conditions.append({
+            "type": "snow",
+            "keyword":
+            "눈 오는 날 감성 플리"
         })
 
 
@@ -117,24 +113,20 @@ def recommend_playlist(
     if late_probability >= 50:
 
         active_conditions.append({
-
             "type": "late",
-
             "keyword":
             "텐션 높은 플레이리스트"
         })
 
 
-    # 새벽 통학
+    # 오전 통학
 
-    if current_hour < 7:
+    if 7 < current_hour < 9:
 
         active_conditions.append({
-
             "type": "morning",
-
             "keyword":
-            "새벽 감성 플레이리스트"
+            "아침 통학 플레이리스트"
         })
 
 
@@ -143,73 +135,38 @@ def recommend_playlist(
     if not active_conditions:
 
         return get_playlist(
-
             "통학 플레이리스트",
-
-            5
+            2
         )
 
 
 
-    # 상황 1개 → 해당 플리 5개
+    # 상황 1개 → 해당 플리 2개
 
     if len(active_conditions) == 1:
 
         condition = active_conditions[0]
 
-
         final_playlist.extend(
 
             get_playlist(
-
                 condition["keyword"],
-
-                5
+                2
             )
         )
 
 
-    # 상황 2개 → 각 2개 + 일반 플리 1개
+    # 상황 2개 이상 → 각 1개씩
 
-    elif len(active_conditions) == 2:
-
-        for condition in active_conditions:
-
-            final_playlist.extend(
-
-                get_playlist(
-
-                    condition["keyword"],
-
-                    2
-                )
-            )
-
-
-        final_playlist.extend(
-
-            get_playlist(
-
-                "통학 플레이리스트",
-
-                1
-            )
-        )
-
-
-    # 상황 3개 → 각 상황 2개씩
-
-    elif len(active_conditions) == 3:
+    elif len(active_conditions) >= 2:
 
         for condition in active_conditions:
 
             final_playlist.extend(
-            
+                
                 get_playlist(
-
                     condition["keyword"],
-
-                    2
+                    1
                 )
             )
 
@@ -217,7 +174,6 @@ def recommend_playlist(
     random.shuffle(
         final_playlist
     )
-
 
     return final_playlist
 
@@ -227,11 +183,10 @@ def recommend_playlist(
 
 if __name__ == "__main__":
 
-
     playlist = recommend_playlist(
 
-        # 비 올 확률
-        rain_probability = 90,
+        # 비 / 눈 / 없음
+        rain_type = "비",
 
         # 지각 확률
         late_probability = 70,
@@ -240,9 +195,7 @@ if __name__ == "__main__":
         current_hour = 6
     )
 
-
     print("\n===== 추천 플레이리스트 =====\n")
-
 
     for music in playlist:
 
@@ -250,10 +203,8 @@ if __name__ == "__main__":
 
             "title":
             music["title"],
-
             "channel":
             music["channel"],
-
             "url":
             music["url"]
         })
