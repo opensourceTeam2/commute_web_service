@@ -1,7 +1,7 @@
 import random
 from googleapiclient.discovery import build
 import html
-from api_keys import YOUTUBE_API_KEY
+from app.clients.api_keys import YOUTUBE_API_KEY
 
 # YouTube API 연결
 youtube = build(
