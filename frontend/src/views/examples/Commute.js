@@ -100,9 +100,6 @@ class Commute extends React.Component {
         loading: false,
       });
 
-      const logsKey = `commuteLogs_${loginId}`;
-      const savedLogs = JSON.parse(localStorage.getItem(logsKey)) || [];
-      localStorage.setItem(logsKey, JSON.stringify([result, ...savedLogs]));
     } catch (error) {
       console.error(error);
       alert("백엔드 서버와 연결하지 못했습니다. 백엔드가 실행 중인지 확인해주세요.");
@@ -264,8 +261,6 @@ class Commute extends React.Component {
                     </CardBody>
                   </Card>
 
-                  console.log("STATE", this.state)
-
                   {result && (
                     <div className="mt-5">
                       <h3 className="text-white mb-4">추천 결과</h3>
@@ -338,9 +333,11 @@ class Commute extends React.Component {
                               try {
                               const classStartTime =
                                 result.classStartTime;
-                            const response = await fetch(
-                              `http://127.0.0.1:8000/points?late_probability=${lateProbability}&commute_minutes=${commuteMinutes}&class_start_time=${classStartTime}`
-                            );
+                              const loginId =
+                                localStorage.getItem("loginId");
+                              const response = await fetch(
+                                `http://127.0.0.1:8000/points?login_id=${loginId}&late_probability=${lateProbability}&commute_minutes=${commuteMinutes}&class_start_time=${classStartTime}`
+                              );
                               data = await response.json();
                             } catch (error) {
                               console.error(error);

@@ -26,6 +26,9 @@ import morningGray from "assets/img/badges/morning_gray.png";
 import strongColor from "assets/img/badges/strong_color.png";
 import strongGray from "assets/img/badges/strong_gray.png";
 
+import DemoNavbar from "components/Navbars/DemoNavbar.js";
+import CardsFooter from "components/Footers/CardsFooter.js";
+
 export default function Badge() {
 
 const [badgeData, setBadgeData] =
@@ -33,7 +36,8 @@ const [badgeData, setBadgeData] =
 
 useEffect(() => {
 
-  fetch("http://127.0.0.1:8000/badge")
+  const loginId = localStorage.getItem("loginId");
+  fetch(`http://127.0.0.1:8000/badge?login_id=${loginId}`)
 
     .then((response) =>
       response.json()
@@ -46,27 +50,33 @@ useEffect(() => {
 }, []);
 
   return (
+    <>
+      <DemoNavbar />
 
     <main>
-      <section
-        className="section section-lg"
-        style={{
-          backgroundColor: "#172B4D",
-          minHeight: "100vh"
-        }}
-      >
-        <Container>
-          <Row className="justify-content-center">
-            <Col lg="10">
-              <Card className="shadow border-0">
+      <section className="section section-shaped section-lg">
+        <div className="shape shape-style-1 bg-gradient-default">
+          <span />
+          <span />
+          <span />
+          <span />
+          <span />
+          <span />
+          <span />
+          <span />
+        </div>
+          <Container className="pt-lg-7">
+            <Row className="justify-content-center">
+              <Col lg="10">
+                <Card className="shadow border-0">
                 <CardBody className="p-5">
-                  <h2 className="mb-4">
+                  <h3 className="font-weight-bold">
                     🏆 포인트 / 뱃지
-                  </h2>
-                  <h4>
-                    총 포인트: {badgeData?.total_points || 0}P
-                  </h4>
+                  </h3>
                   <h5 className="mt-4">
+                    총 포인트: {badgeData?.total_points || 0}P
+                  </h5>
+                  <h5 className="mt-2">
                     획득 뱃지: {badgeData?.badge_count || 0} / 5
                   </h5>
                   <Row className="mt-5 justify-content-center">
@@ -230,7 +240,7 @@ useEffect(() => {
                     <br />
                     <li>
                       <strong>
-                       아슬아슬 마스터
+                        아슬아슬 마스터
                       </strong>
                       <br />
                       지각 확률 50% 이상 10회 성공
@@ -267,5 +277,7 @@ useEffect(() => {
         </Container>
       </section>
     </main>
-  );
+    <CardsFooter />
+  </>
+);
 }

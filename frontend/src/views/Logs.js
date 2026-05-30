@@ -30,21 +30,35 @@ import DemoNavbar from "components/Navbars/DemoNavbar.js";
 import CardsFooter from "components/Footers/CardsFooter.js";
 
 class Logs extends React.Component {
+
+  state = {
+    logs: []
+  };
+
   componentDidMount() {
+
     document.documentElement.scrollTop = 0;
     document.scrollingElement.scrollTop = 0;
     this.refs.main.scrollTop = 0;
+
+    const loginId =
+      localStorage.getItem("loginId") || "guest";
+
+    fetch(
+      `http://127.0.0.1:8000/logs?login_id=${loginId}`
+    )
+      .then((response) =>
+        response.json()
+      )
+      .then((data) => {
+        this.setState({
+          logs: data
+        });
+      });
   }
 
-  getLogs = () => {
-    const loginId = localStorage.getItem("loginId") || "guest";
-    const logsKey = `commuteLogs_${loginId}`;
-
-    return JSON.parse(localStorage.getItem(logsKey)) || [];
-  };
-
   render() {
-    const logs = this.getLogs();
+    const logs = this.state.logs;
 
     return (
       <>
@@ -92,33 +106,20 @@ class Logs extends React.Component {
                           </thead>
                           <tbody>
                             {logs.map((log, index) => {
-                              const bestRoute = log.routes && log.routes.length > 0 ? log.routes[0] : null;
 
                               return (
                                 <tr key={index}>
                                   <td>{log.checkedAt}</td>
                                   <td>{log.startLocation}</td>
                                   <td>{log.classStartTime}</td>
-                                  <td>{bestRoute ? bestRoute.routeSummary : "-"}</td>
-                                  <td>{bestRoute ? `${bestRoute.totalMinutes}분` : "-"}</td>
-                                  <td>{bestRoute ? `${bestRoute.lateProbability}%` : "-"}</td>
+                                  <td>{log.routeSummary}</td>
+                                  <td>{log.totalMinutes}분</td>
+                                  <td>{log.lateProbability}%</td>
                                 </tr>
                               );
                             })}
                           </tbody>
 
-                          <tbody>
-                            {logs.map((log, index) => (
-                              <tr key={index}>
-                                <td>{log.checkedAt}</td>
-                                <td>{log.busStop}</td>
-                                <td>{log.busNumber}</td>
-                                <td>{log.classStartTime}</td>
-                                <td>{log.arrivalMinutes}분 후</td>
-                                <td>{log.lateProbability}%</td>
-                              </tr>
-                            ))}
-                          </tbody>
                         </Table>
                       )}
                     </CardBody>

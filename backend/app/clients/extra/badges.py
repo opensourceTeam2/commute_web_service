@@ -1,4 +1,7 @@
+from app.db import database
+
 def update_badges(
+    login_id,
     badge_data,
     late_probability,
     rain_type,
@@ -17,6 +20,11 @@ def update_badges(
             "easy_success_count"
         ] += 1
         
+        database.update_badge_count(
+        login_id,
+        "easy_success_count"
+        )
+        
         earned_badges.append(
             "여유로운 통학의 신"
         )
@@ -29,6 +37,11 @@ def update_badges(
         badge_data[
             "hard_success_count"
         ] += 1
+        
+        database.update_badge_count(
+        login_id,
+        "hard_success_count"
+        )
 
         earned_badges.append(
             "아슬아슬 마스터"
@@ -48,7 +61,12 @@ def update_badges(
         badge_data[
             "rain_success_count"
         ] += 1
-        
+
+        database.update_badge_count(
+        login_id,
+        "rain_success_count"
+        )
+
         earned_badges.append(
             "비를 뚫는 자"
         )
@@ -62,6 +80,11 @@ def update_badges(
             "early_morning_count"
         ] += 1
         
+        database.update_badge_count(
+        login_id,
+        "early_morning_count"
+        )
+        
         earned_badges.append(
             "새벽 통학생"
         )
@@ -71,19 +94,21 @@ def update_badges(
     if (commute_minutes >= 60
         and is_on_time):
 
-
         badge_data[
             "long_distance_count"
         ] += 1
+
+        database.update_badge_count(
+        login_id,
+        "long_distance_count"
+        )
 
         earned_badges.append(
             "강철 체력"
         )
 
-
     badge_list = []
     total_points = 0
-
 
     if badge_data[
         "easy_success_count"
@@ -106,7 +131,6 @@ def update_badges(
 
         total_points += 50
 
-
     if badge_data[
         "rain_success_count"
     ] >= 10:
@@ -116,7 +140,6 @@ def update_badges(
         )
 
         total_points += 50
-
 
     if badge_data[
         "early_morning_count"
@@ -128,7 +151,6 @@ def update_badges(
 
         total_points += 50
 
-
     if badge_data[
         "long_distance_count"
     ] >= 20:
@@ -138,7 +160,6 @@ def update_badges(
         )
 
         total_points += 50
-
 
     return {
 

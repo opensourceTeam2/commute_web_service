@@ -12,18 +12,10 @@ from app.clients.extra.playlist import recommend_playlist
 from app.clients.extra.points import calculate_points
 from app.clients.extra.badges import update_badges
 from app.clients.weather import get_weather
+from app.db import database
 
 
 app = FastAPI()
-
-# 뱃지
-badge_data = {
-    "easy_success_count": 0,
-    "hard_success_count": 0,
-    "rain_success_count": 0,
-    "early_morning_count": 0,
-    "long_distance_count": 0
-}
 
 # 미니게임
 app.mount("/static", StaticFiles(directory="app/static"), name="static")
@@ -62,6 +54,16 @@ def calculate_commute(request: CommuteCalculateRequest):
         result = recommend_commute_routes(
             start_location=request.startLocation,
             class_start_time=request.classStartTime,
+        )
+        
+        database.add_log(
+            login_id=request.loginId,
+            checked_at=datetime.now().strftime("%Y. %m. %d. %H:%M:%S"),
+            start_location=request.startLocation,
+            class_start_time=request.classStartTime,
+            route_summary=result["routes"][0]["routeSummary"],
+            total_minutes=result["routes"][0]["totalMinutes"],
+            late_probability=result["routes"][0]["lateProbability"]
         )
 
         return {
@@ -130,10 +132,15 @@ def playlist(
     
 @app.get("/points")
 def points(
+    login_id: str,
     late_probability: int,
     commute_minutes: int,
     class_start_time: str
 ):
+
+    print(f"현재 사용자: {login_id}")
+    
+    database.create_user(login_id)
 
     # 용인 좌표
     nx = 62
@@ -188,8 +195,24 @@ def points(
         is_rush_hour=is_rush_hour,
         is_arrived=is_on_time
     )
+    
+    database.add_points(
+    login_id,
+    result["earned_points"])
+
+    badge_data = database.get_badges(login_id)
+
+    if badge_data is None:
+        badge_data = {
+            "easy_success_count": 0,
+            "hard_success_count": 0,
+            "rain_success_count": 0,
+            "early_morning_count": 0,
+            "long_distance_count": 0
+        }
 
     badge_result = update_badges(
+        login_id=login_id,
         badge_data=badge_data,
         late_probability=late_probability,
         rain_type=rain_type,
@@ -197,6 +220,7 @@ def points(
         commute_minutes=commute_minutes,
         is_on_time=is_on_time
     )
+    print(badge_result)
 
     return {
     "point_result":
@@ -206,7 +230,19 @@ def points(
     }
 
 @app.get("/badge")
-def badge():
+def badge(login_id: str):
+
+    total_points = database.get_points(login_id)
+    badge_data = database.get_badges(login_id)
+    
+    if badge_data is None:
+        badge_data = {
+            "easy_success_count": 0,
+            "hard_success_count": 0,
+            "rain_success_count": 0,
+            "early_morning_count": 0,
+            "long_distance_count": 0
+        }   
 
     badge_list = []
 
@@ -227,6 +263,12 @@ def badge():
         
     return {
         **badge_data,
+        "total_points": total_points,
         "badge_list": badge_list,
         "badge_count": len(badge_list),
     }
+    
+@app.get("/logs")
+def logs(login_id: str):
+
+    return database.get_logs(login_id)
