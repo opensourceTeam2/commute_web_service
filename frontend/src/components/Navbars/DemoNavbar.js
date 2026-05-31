@@ -28,6 +28,10 @@ import {
   NavLink,
   Nav,
   Container,
+  UncontrolledDropdown,
+  DropdownToggle,
+  DropdownMenu,
+  DropdownItem,
 } from "reactstrap";
 
 class DemoNavbar extends React.Component {
@@ -119,11 +123,34 @@ class DemoNavbar extends React.Component {
                     </NavLink>
                   </NavItem>
 
-                  <NavItem>
-                    <NavLink tag={Link} to="/badge">
+                  <UncontrolledDropdown nav>
+                    <DropdownToggle
+                      nav
+                      caret
+                    >
                       포인트 / 뱃지
-                    </NavLink>
-                  </NavItem>
+                    </DropdownToggle>
+
+                    <DropdownMenu
+                      style={{
+                        marginTop: "50px"
+                      }}
+                    >
+                      <DropdownItem
+                        tag={Link}
+                        to="/badge"
+                      >
+                        포인트 / 뱃지
+                      </DropdownItem>
+
+                      <DropdownItem
+                        tag={Link}
+                        to="/theme-shop"
+                      >
+                        테마 상점
+                      </DropdownItem>
+                    </DropdownMenu>
+                  </UncontrolledDropdown>
 
                   <NavItem className="d-none d-lg-block ml-lg-4">
                     {!isLoggedIn ? (

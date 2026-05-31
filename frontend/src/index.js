@@ -28,6 +28,7 @@ import Login from "views/examples/Login.js";
 import Commute from "views/examples/Commute.js";
 import Logs from "views/Logs.js";
 import Badge from "views/examples/Badge.js";
+import ThemeShop from "views/examples/ThemeShop.js";
 
 // 로그인하지 않은 사용자를 /login으로 보냄
 function PrivateRoute({ children }) {
@@ -70,6 +71,14 @@ root.render(
         element={
           <PrivateRoute>
             <Badge />
+          </PrivateRoute>
+        }
+      />
+      <Route
+        path="/theme-shop"
+        element={
+          <PrivateRoute>
+            <ThemeShop />
           </PrivateRoute>
         }
       />

@@ -137,10 +137,12 @@ def points(
     commute_minutes: int,
     class_start_time: str
 ):
-
-    print(f"현재 사용자: {login_id}")
     
     database.create_user(login_id)
+    
+    database.validate_semester(
+        login_id
+    )
 
     # 용인 좌표
     nx = 62
@@ -220,7 +222,6 @@ def points(
         commute_minutes=commute_minutes,
         is_on_time=is_on_time
     )
-    print(badge_result)
 
     return {
     "point_result":
@@ -231,6 +232,10 @@ def points(
 
 @app.get("/badge")
 def badge(login_id: str):
+
+    database.validate_semester(
+        login_id
+    )
 
     total_points = database.get_points(login_id)
     badge_data = database.get_badges(login_id)
@@ -271,4 +276,49 @@ def badge(login_id: str):
 @app.get("/logs")
 def logs(login_id: str):
 
+    database.validate_semester(
+        login_id
+    )
+
     return database.get_logs(login_id)
+
+@app.post("/buy-theme")
+def buy_theme(
+    login_id: str,
+    theme_name: str
+):
+
+    result = database.buy_theme(
+        login_id,
+        theme_name
+    )
+
+    return result
+
+@app.post("/apply-theme")
+def apply_theme(
+    login_id: str,
+    theme_name: str
+):
+
+    return database.apply_theme(
+        login_id,
+        theme_name
+    )
+    
+@app.get("/themes")
+def get_themes(
+    login_id: str
+):
+
+    return database.get_themes(
+        login_id
+    )
+
+@app.get("/semester")
+def semester():
+
+    return {
+        "semester":
+        database.get_current_semester()
+    }

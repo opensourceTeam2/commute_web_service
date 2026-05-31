@@ -31,23 +31,76 @@ import CardsFooter from "components/Footers/CardsFooter.js";
 
 export default function Badge() {
 
-const [badgeData, setBadgeData] =
-  useState(null);
+  const [badgeData, setBadgeData] =
+    useState(null);
 
-useEffect(() => {
+  const [theme, setTheme] =
+    useState(
+      localStorage.getItem(
+        "selectedTheme"
+      ) || "default"
+    );
 
-  const loginId = localStorage.getItem("loginId");
-  fetch(`http://127.0.0.1:8000/badge?login_id=${loginId}`)
+    const [semester, setSemester] =
+      useState("");
 
-    .then((response) =>
-      response.json()
+  useEffect(() => {
+
+    const loginId =
+      localStorage.getItem(
+        "loginId"
+      );
+
+    fetch(
+      `http://127.0.0.1:8000/badge?login_id=${loginId}`
     )
+      .then((response) =>
+        response.json()
+      )
+      .then((data) => {
+        setBadgeData(data);
+      });
 
-    .then((data) => {
-      setBadgeData(data);
-    });
+    fetch(
+      "http://127.0.0.1:8000/semester"
+    )
+      .then((response) =>
+        response.json()
+      )
+      .then((data) => {
+        setSemester(
+          data.semester
+        );
+      });
+  
+  }, []);
 
-}, []);
+  useEffect(() => {
+
+    const loginId =
+      localStorage.getItem(
+        "loginId"
+      );
+
+    fetch(
+      `http://127.0.0.1:8000/themes?login_id=${loginId}`
+    )
+      .then((response) =>
+        response.json()
+      )
+      .then((data) => {
+        setTheme(
+          data?.selected_theme ||
+          "default"
+        );
+      })
+      .catch(() => {
+        setTheme(
+          "default"
+        );
+      });
+
+  }, []);
 
   return (
     <>
@@ -55,7 +108,19 @@ useEffect(() => {
 
     <main>
       <section className="section section-shaped section-lg">
-        <div className="shape shape-style-1 bg-gradient-default">
+        <div
+          className="shape shape-style-1"
+          style={{
+            background:
+              theme === "pink"
+                ? "linear-gradient(150deg,#ffb6c1 15%,#ff8fab 70%,#ff5e8a 94%)"
+                : theme === "purple"
+                ? "linear-gradient(150deg,#c8a2ff 15%,#a66cff 70%,#8b4dff 94%)"
+                : theme === "blue"
+                ? "linear-gradient(150deg,#7795f8 15%,#6772e5 70%,#555abf 94%)"
+                : "linear-gradient(150deg,#172b4d 15%,#1a174d 70%,#22204d 94%)"
+          }}
+        >
           <span />
           <span />
           <span />
@@ -70,9 +135,35 @@ useEffect(() => {
               <Col lg="10">
                 <Card className="shadow border-0">
                 <CardBody className="p-5">
-                  <h3 className="font-weight-bold">
-                    🏆 포인트 / 뱃지
-                  </h3>
+                  <Row>
+                    <Col md="6">
+                      <h3 className="font-weight-bold">
+                        🏆 포인트 / 뱃지
+                      </h3>
+                      <p
+                        className="text-muted"
+                        style={{
+                          fontSize: "16px",
+                          marginBottom: "0px"
+                        }}
+                      >
+                        ※ 포인트와 뱃지는 학기 종료 시 초기화됩니다.
+                      </p>
+                    </Col>
+                    <Col
+                      md="6"
+                      className="text-right"
+                    >
+                      <p
+                        className="text-muted"
+                        style={{
+                          marginTop: "5px"
+                        }}
+                      >
+                        현재 학기: {semester}
+                      </p>
+                    </Col>
+                  </Row>
                   <h5 className="mt-4">
                     총 포인트: {badgeData?.total_points || 0}P
                   </h5>

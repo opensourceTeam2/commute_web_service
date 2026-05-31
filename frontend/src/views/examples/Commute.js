@@ -18,6 +18,10 @@ import SimpleFooter from "components/Footers/SimpleFooter.js";
 
 class Commute extends React.Component {
   state = {
+    theme:
+      localStorage.getItem(
+        "selectedTheme"
+      ) || "default",
     startLocation: "",
     classStartPeriod: "오전",
     classStartClock: "",
@@ -34,6 +38,28 @@ class Commute extends React.Component {
     document.documentElement.scrollTop = 0;
     document.scrollingElement.scrollTop = 0;
     this.refs.main.scrollTop = 0;
+
+    const loginId =
+  localStorage.getItem("loginId");
+
+fetch(
+  `http://127.0.0.1:8000/themes?login_id=${loginId}`
+)
+  .then((response) =>
+    response.json()
+  )
+  .then((data) => {
+
+    localStorage.setItem(
+      "selectedTheme",
+      data?.selected_theme || "default"
+    );
+
+    this.setState({
+      theme:
+        data?.selected_theme || "default"
+    });
+  });
   }
 
   getTimeOptions = () => {
@@ -165,7 +191,7 @@ class Commute extends React.Component {
 
   render() {
     const timeOptions = this.getTimeOptions();
-    const { result, loading } = this.state;
+    const {result, loading, theme} = this.state;
 
     return (
       <>
@@ -173,7 +199,19 @@ class Commute extends React.Component {
 
         <main ref="main">
           <section className="section section-shaped section-lg">
-            <div className="shape shape-style-1 bg-gradient-default">
+            <div
+              className="shape shape-style-1"
+              style={{
+                background:
+                  theme === "pink"
+                    ? "linear-gradient(150deg,#ffb6c1 15%,#ff8fab 70%,#ff5e8a 94%)"
+                    : theme === "purple"
+                    ? "linear-gradient(150deg,#c8a2ff 15%,#a66cff 70%,#8b4dff 94%)"
+                    : theme === "blue"
+                    ? "linear-gradient(150deg,#7795f8 15%,#6772e5 70%,#555abf 94%)"
+                    : "linear-gradient(150deg,#172b4d 15%,#1a174d 70%,#22204d 94%)"
+              }}
+            >
               <span />
               <span />
               <span />
@@ -392,7 +430,16 @@ class Commute extends React.Component {
                                 <h5>
                                   획득 뱃지
                                 </h5>
-                                <ul>
+                                {(
+                                  this.state.pointResult?.badge_result
+                                    ?.earned_badges?.length || 0
+                                ) === 0 ? (
+                                  <p className="mt-3 text-muted">
+                                    이번에는 뱃지를 얻지 못했어요!
+                                  </p>
+                                ) : (
+                                  <ul>
+
                                   {this.state.pointResult?.badge_result
                                     ?.earned_badges?.includes(
                                       "여유로운 통학의 신"
@@ -448,6 +495,7 @@ class Commute extends React.Component {
                                     </li>
                                   )}
                                 </ul>
+                               )}
                               </Col>
                             </Row>
                           </CardBody>
