@@ -1,58 +1,130 @@
-# commute_web_service
+# 통학 도우미 웹 (Commute Web Service)
 
-<실행 방법>
-1. python venv 가상환경 실행, 터미널에 있는 경로 앞 '(venv)'이 생성됨을 확인 후 진행
-2. pip install -r requirements.txt로 필요한 패키지 다운로드
-3. uvicorn app.main:app --reload (Backend 실행)
-4. npm start (Frontend 실행)
+통학 도우미 웹은 사용자가 출발 위치와 수업 시작 시간을 입력하면, 대중교통 경로를 조회하고 수업 시간까지의 여유 시간을 바탕으로 지각 확률을 계산해주는 웹 서비스입니다.
 
-<주의>
-1. ODSAY_API_KEY는 조장 김영재에게 실행할 PC의 아이피를 알려줘야지 KEY 신청을 할 수 있음
+본 프로젝트는 단국대학교 죽전캠퍼스 통학생을 대상으로 하며, 통학 경로 확인, 지각 확률 계산, 통학 로그 저장, 포인트 및 뱃지 기능을 제공합니다.
 
+---
 
-<백엔드 디렉토리 구성>
-1. app/main.py
-    FastAPI 실행 시작점
-2. api/routes/
-    API 주소를 관리하는 디렉토리
-3. services/
-    가장 중요한 경로 추천, 지각확률 계산, 날씨/미세먼지 문구생성, 결과 저장 및 불러오기 기능을 수행하는 디렉토리
-4. clients/
-    외부 API 호출하는 코드를 보관하는 디렉토리
-5. schemas/
-    API 요청과 응답 데이터의 형식(자료형)을 정의하는 디렉토리
-6. models/
-    DB와 연결되는 객체를 보관하는 디렉토리
-7. db/
-    DB 연결 설정을 관리하는 디렉토리
+## 주요 기능
 
-<프론트엔드 디렉토리 구성>
-## 참고한 오픈소스
+### 1. 통학 경로 조회
 
-- Repository: marqbeniamin/argon-design-system-react
-- License: MIT License
-- Usage: React 기반 페이지 구조를 참고하여 통학 경로 추천 서비스 홈 화면으로 수정함
+사용자가 입력한 출발 위치를 기준으로 단국대학교 죽전캠퍼스까지의 대중교통 경로를 조회합니다.
 
-1. scr/index.js
-- 주소 연결 + 로그인 제한 (로그인하지 않은 사용자가 네비게이션바의 기능을 사용할 시, 로그인 페이지로 연결함)
+- 출발 위치 입력
+- 수업 시작 시간 입력
+- 대중교통 경로 조회
+- 예상 소요 시간 확인
+- 상위 3개 경로 추천
 
-2. src/components/Navbars/DemoNavbar.js
-- 상단 메뉴 [통학도우미(메인), 통학도우미 실행(메인기능), 설정(사용자 입력창), 로그(통학도우미 실행 기록 조회), 로그인(회원 정보 기입)]
+### 2. 지각 확률 계산
 
-3. src/views/examples/Login.js
-- 로그인 화면 (사용자 아이디와 비번만 받음)
+ODsay API에서 받아온 예상 이동 시간과 현재 시각 기준 수업 시작까지 남은 시간을 비교하여 지각 확률을 계산합니다.
 
-4. src/views/examples/Settings.js
-- 설정 페이지(/settings) 정류장, 버스번호, 수업시작 시간 입력
+지각 확률 계산에는 다음 요소가 반영됩니다.
 
-5. src/views/examples/Commute.js
-- 통학 도우미 실행 페이지 (결과 출력창) (API와 연결 예정)
+- 대중교통 예상 소요 시간
+- 수업 시작까지 남은 시간
+- 환승 횟수
+- 배차 간격
+- 날씨 및 미세먼지 안내 정보
 
-6. src/views/Logs.js
-- 로그 페이지
+현재 지각 확률은 실제 지각 데이터를 학습한 모델이 아니라, 경로 정보와 시간 차이를 바탕으로 계산하는 규칙 기반 위험도 점수입니다.
 
-7. src/views/examples/Landing.js
-- 메인화면 페이지
+### 3. 날씨 및 미세먼지 안내
 
-## 참고한 API
-1. 
+공공데이터 API를 활용하여 날씨와 미세먼지 정보를 확인하고, 사용자에게 통학 전 참고할 수 있는 안내 문구를 제공합니다.
+
+예시:
+
+- 비 올 확률이 높으면 우산 안내
+- 미세먼지가 나쁘면 마스크 착용 안내
+
+### 4. 로그인 및 회원 기능
+
+사용자는 회원가입과 로그인을 통해 개인 통학 기록을 저장할 수 있습니다.
+
+- 회원가입
+- 로그인
+- 사용자별 통학 로그 저장
+- 사용자별 포인트 및 뱃지 관리
+
+### 5. 통학 로그
+
+사용자가 실행한 통학 계산 결과를 저장하고 다시 확인할 수 있습니다.
+
+저장되는 주요 정보는 다음과 같습니다.
+
+- 사용자 ID
+- 조회 시각
+- 출발 위치
+- 수업 시작 시간
+- 추천 경로 요약
+- 예상 소요 시간
+- 지각 확률
+
+### 6. 포인트 및 뱃지
+
+통학 도우미 실행 결과를 바탕으로 포인트와 뱃지를 제공합니다.
+
+- 포인트 적립
+- 뱃지 획득
+- 테마 구매 및 적용
+
+---
+
+## 기술 스택
+
+### Frontend
+
+- React
+- React Router
+- Reactstrap
+- Bootstrap
+- Argon Design System React 기반 UI 수정
+
+### Backend
+
+- Python
+- FastAPI
+- Uvicorn
+- Pydantic
+- Requests
+- SQLite 기반 데이터 저장
+
+### External API
+
+- Kakao Local API
+- ODsay 대중교통 API
+- 공공데이터포털 날씨 API
+- 공공데이터포털 미세먼지 API
+
+---
+
+## 프로젝트 구조
+
+```text
+commute_web_service/
+├── backend/
+│   └── app/
+│       ├── main.py
+│       ├── api/
+│       ├── clients/
+│       ├── db/
+│       ├── models/
+│       ├── schemas/
+│       ├── services/
+│       ├── static/
+│       └── templates/
+│
+├── frontend/
+│   ├── public/
+│   └── src/
+│       ├── assets/
+│       ├── components/
+│       └── views/
+│
+├── requirements.txt
+├── README.md
+└── .gitignore
