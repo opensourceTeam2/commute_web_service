@@ -6,3 +6,6 @@ __pycache__/
 
 backend/app/clients/api_keys.py
 
+*.db
+backend/*.db
+backend/commute.db

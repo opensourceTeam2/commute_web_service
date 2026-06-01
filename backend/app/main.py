@@ -17,8 +17,10 @@ from app.db import database
 
 app = FastAPI()
 
+
 # 미니게임
 app.mount("/static", StaticFiles(directory="app/static"), name="static")
+
 
 # React 프론트엔드에서 FastAPI 백엔드로 요청할 수 있게 허용
 app.add_middleware(
@@ -39,9 +41,89 @@ class CommuteCalculateRequest(BaseModel):
     loginId: Optional[str] = None
 
 
+class RegisterRequest(BaseModel):
+    loginId: str
+    password: str
+    nickname: Optional[str] = None
+
+
+class LoginRequest(BaseModel):
+    loginId: str
+    password: str
+
+
 @app.get("/")
 def read_root():
-    return {"message": "Commute Web Service Backend"}
+    return {
+        "message": "Commute Web Service Backend"
+    }
+
+
+@app.post("/api/auth/register")
+def register(request: RegisterRequest):
+    if request.loginId.strip() == "" or request.password.strip() == "":
+        raise HTTPException(
+            status_code=400,
+            detail="아이디와 비밀번호를 모두 입력해주세요."
+        )
+
+    if len(request.password) < 4:
+        raise HTTPException(
+            status_code=400,
+            detail="비밀번호는 4자 이상 입력해주세요."
+        )
+
+    try:
+        user = database.register_user(
+            login_id=request.loginId,
+            password=request.password,
+            nickname=request.nickname
+        )
+
+        return {
+            "success": True,
+            "message": "회원가입이 완료되었습니다.",
+            "user": user
+        }
+
+    except ValueError as error:
+        raise HTTPException(
+            status_code=400,
+            detail=str(error)
+        )
+
+
+@app.post("/api/auth/login")
+def login(request: LoginRequest):
+    user = database.login_user(
+        login_id=request.loginId,
+        password=request.password
+    )
+
+    if not user:
+        raise HTTPException(
+            status_code=401,
+            detail="아이디 또는 비밀번호가 올바르지 않습니다."
+        )
+
+    return {
+        "success": True,
+        "message": "로그인 성공",
+        "user": user
+    }
+
+
+@app.get("/api/auth/me")
+def me(login_id: str):
+    user = database.get_user_profile(login_id)
+
+    if not user:
+        raise HTTPException(
+            status_code=404,
+            detail="사용자를 찾을 수 없습니다."
+        )
+
+    return user
 
 
 @app.post("/api/commute/calculate")
@@ -55,10 +137,10 @@ def calculate_commute(request: CommuteCalculateRequest):
             start_location=request.startLocation,
             class_start_time=request.classStartTime,
         )
-        
+
         database.add_log(
             login_id=request.loginId,
-            checked_at=datetime.now().strftime("%Y. %m. %d. %H:%M:%S"),
+            checked_at=datetime.now().strftime("%Y.%m.%d. %H:%M:%S"),
             start_location=request.startLocation,
             class_start_time=request.classStartTime,
             route_summary=result["routes"][0]["routeSummary"],
@@ -73,13 +155,17 @@ def calculate_commute(request: CommuteCalculateRequest):
             "destination": "단국대학교 죽전캠퍼스",
             "destinationPlace": result["destinationPlace"],
             "classStartTime": request.classStartTime,
-            "checkedAt": datetime.now().strftime("%Y. %m. %d. %H:%M:%S"),
+            "checkedAt": datetime.now().strftime("%Y.%m.%d. %H:%M:%S"),
             "routes": result["routes"],
         }
 
     except ValueError as error:
         print("400 에러 원인:", str(error))
-        raise HTTPException(status_code=400, detail=str(error))
+
+        raise HTTPException(
+            status_code=400,
+            detail=str(error)
+        )
 
     except Exception as error:
         import traceback
@@ -92,31 +178,24 @@ def calculate_commute(request: CommuteCalculateRequest):
             detail=f"통학 계산 중 오류가 발생했습니다: {error}",
         )
 
+
 @app.get("/game")
 def game():
     return FileResponse("app/templates/game.html")
 
-@app.get("/playlist")
-def playlist(
-    late_probability: int
-):
 
+@app.get("/playlist")
+def playlist(late_probability: int):
     # 용인 좌표
     nx = 62
     ny = 123
 
-    weather_result = get_weather(
-        nx,
-        ny
-    )
+    weather_result = get_weather(nx, ny)
 
     rain_type = "없음"
 
-    if weather_result:
-
-        rain_type = weather_result[0][
-            "rain_type"
-        ]
+    if weather_result and len(weather_result) > 0:
+        rain_type = weather_result[0]["rain_type"]
 
     current_hour = datetime.now().hour
 
@@ -129,7 +208,8 @@ def playlist(
     return {
         "playlist": playlist_result
     }
-    
+
+
 @app.get("/points")
 def points(
     login_id: str,
@@ -137,12 +217,8 @@ def points(
     commute_minutes: int,
     class_start_time: str
 ):
-    
     database.create_user(login_id)
-    
-    database.validate_semester(
-        login_id
-    )
+    database.validate_semester(login_id)
 
     # 용인 좌표
     nx = 62
@@ -150,44 +226,41 @@ def points(
 
     weather_result = get_weather(nx, ny)
 
-    if len(weather_result) > 0:
+    if weather_result and len(weather_result) > 0:
         rain_type = weather_result[0]["rain_type"]
     else:
         rain_type = "없음"
 
     current_hour = datetime.now().hour
-    
+
     now = datetime.now()
 
     current_minutes = (
-        now.hour * 60
-        + now.minute
+        now.hour * 60 + now.minute
     )
-    
-    period, time_str = class_start_time.split()
 
+    period, time_str = class_start_time.split()
     hour, minute = map(
         int,
-       time_str.split(":")
+        time_str.split(":")
     )
 
     if period == "오후" and hour != 12:
         hour += 12
+
     if period == "오전" and hour == 12:
         hour = 0
 
     class_minutes = (
-        hour * 60
-        + minute
+        hour * 60 + minute
     )
-    
+
     is_on_time = (
         current_minutes <= class_minutes
     )
-    
+
     is_rush_hour = (
-        7 <= current_hour < 9
-        or
+        7 <= current_hour < 9 or
         17 <= current_hour < 19
     )
 
@@ -197,10 +270,11 @@ def points(
         is_rush_hour=is_rush_hour,
         is_arrived=is_on_time
     )
-    
+
     database.add_points(
-    login_id,
-    result["earned_points"])
+        login_id,
+        result["earned_points"]
+    )
 
     badge_data = database.get_badges(login_id)
 
@@ -224,22 +298,18 @@ def points(
     )
 
     return {
-    "point_result":
-    result,
-    "badge_result":
-    badge_result
+        "point_result": result,
+        "badge_result": badge_result
     }
+
 
 @app.get("/badge")
 def badge(login_id: str):
-
-    database.validate_semester(
-        login_id
-    )
+    database.validate_semester(login_id)
 
     total_points = database.get_points(login_id)
     badge_data = database.get_badges(login_id)
-    
+
     if badge_data is None:
         badge_data = {
             "easy_success_count": 0,
@@ -247,7 +317,7 @@ def badge(login_id: str):
             "rain_success_count": 0,
             "early_morning_count": 0,
             "long_distance_count": 0
-        }   
+        }
 
     badge_list = []
 
@@ -265,29 +335,27 @@ def badge(login_id: str):
 
     if badge_data["long_distance_count"] >= 20:
         badge_list.append("강철 체력")
-        
+
     return {
         **badge_data,
         "total_points": total_points,
         "badge_list": badge_list,
         "badge_count": len(badge_list),
     }
-    
+
+
 @app.get("/logs")
 def logs(login_id: str):
-
-    database.validate_semester(
-        login_id
-    )
+    database.validate_semester(login_id)
 
     return database.get_logs(login_id)
+
 
 @app.post("/buy-theme")
 def buy_theme(
     login_id: str,
     theme_name: str
 ):
-
     result = database.buy_theme(
         login_id,
         theme_name
@@ -295,30 +363,25 @@ def buy_theme(
 
     return result
 
+
 @app.post("/apply-theme")
 def apply_theme(
     login_id: str,
     theme_name: str
 ):
-
     return database.apply_theme(
         login_id,
         theme_name
     )
-    
-@app.get("/themes")
-def get_themes(
-    login_id: str
-):
 
-    return database.get_themes(
-        login_id
-    )
+
+@app.get("/themes")
+def get_themes(login_id: str):
+    return database.get_themes(login_id)
+
 
 @app.get("/semester")
 def semester():
-
     return {
-        "semester":
-        database.get_current_semester()
+        "semester": database.get_current_semester()
     }

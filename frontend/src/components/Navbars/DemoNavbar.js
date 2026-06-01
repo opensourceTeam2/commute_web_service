@@ -1,20 +1,9 @@
 /*!
-
 =========================================================
 * Argon Design System React - v1.1.2
 =========================================================
-
-* Product Page: https://www.creative-tim.com/product/argon-design-system-react
-* Copyright 2023 Creative Tim (https://www.creative-tim.com)
-* Licensed under MIT (https://github.com/creativetimofficial/argon-design-system-react/blob/master/LICENSE.md)
-
-* Coded by Creative Tim
-
-=========================================================
-
-* The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
-
 */
+
 import React from "react";
 import { Link } from "react-router-dom";
 import Headroom from "headroom.js";
@@ -28,10 +17,6 @@ import {
   NavLink,
   Nav,
   Container,
-  UncontrolledDropdown,
-  DropdownToggle,
-  DropdownMenu,
-  DropdownItem,
 } from "reactstrap";
 
 class DemoNavbar extends React.Component {
@@ -60,6 +45,9 @@ class DemoNavbar extends React.Component {
   handleLogout = () => {
     localStorage.removeItem("isLoggedIn");
     localStorage.removeItem("loginId");
+    localStorage.removeItem("nickname");
+    localStorage.removeItem("selectedTheme");
+
     window.location.href = "/login";
   };
 
@@ -75,13 +63,18 @@ class DemoNavbar extends React.Component {
             id="navbar-main"
           >
             <Container>
-              <NavbarBrand className="mr-lg-5" tag={Link} to="/">
-                <span className="text-white font-weight-bold">
-                  통학 도우미
-                </span>
+              <NavbarBrand
+                className="mr-lg-5"
+                to="/"
+                tag={Link}
+              >
+                통학 도우미
               </NavbarBrand>
 
-              <button className="navbar-toggler" id="navbar_global">
+              <button
+                className="navbar-toggler"
+                id="navbar_global"
+              >
                 <span className="navbar-toggler-icon" />
               </button>
 
@@ -96,13 +89,15 @@ class DemoNavbar extends React.Component {
                   <div className="row">
                     <div className="col-6 collapse-brand">
                       <Link to="/">
-                        <span className="font-weight-bold text-primary">
-                          통학 도우미
-                        </span>
+                        통학 도우미
                       </Link>
                     </div>
+
                     <div className="col-6 collapse-close">
-                      <button className="navbar-toggler" id="navbar_global">
+                      <button
+                        className="navbar-toggler"
+                        id="navbar_global"
+                      >
                         <span />
                         <span />
                       </button>
@@ -110,62 +105,99 @@ class DemoNavbar extends React.Component {
                   </div>
                 </div>
 
-                <Nav className="align-items-lg-center ml-lg-auto" navbar>
+                <Nav
+                  className="navbar-nav-hover align-items-lg-center"
+                  navbar
+                >
                   <NavItem>
-                    <NavLink tag={Link} to="/commute">
-                      통학 도우미 실행
+                    <NavLink
+                      to="/commute"
+                      tag={Link}
+                    >
+                      <i className="ni ni-bus-front-12 d-lg-none mr-1" />
+                      <span className="nav-link-inner--text">
+                        통학 도우미 실행
+                      </span>
                     </NavLink>
                   </NavItem>
 
                   <NavItem>
-                    <NavLink tag={Link} to="/logs">
-                      로그
+                    <NavLink
+                      to="/logs"
+                      tag={Link}
+                    >
+                      <i className="ni ni-bullet-list-67 d-lg-none mr-1" />
+                      <span className="nav-link-inner--text">
+                        로그
+                      </span>
                     </NavLink>
                   </NavItem>
 
-                  <UncontrolledDropdown nav>
-                    <DropdownToggle
-                      nav
-                      caret
+                  <NavItem>
+                    <NavLink
+                      to="/badge"
+                      tag={Link}
                     >
-                      포인트 / 뱃지
-                    </DropdownToggle>
-
-                    <DropdownMenu
-                      style={{
-                        marginTop: "50px"
-                      }}
-                    >
-                      <DropdownItem
-                        tag={Link}
-                        to="/badge"
-                      >
+                      <i className="ni ni-trophy d-lg-none mr-1" />
+                      <span className="nav-link-inner--text">
                         포인트 / 뱃지
-                      </DropdownItem>
+                      </span>
+                    </NavLink>
+                  </NavItem>
 
-                      <DropdownItem
-                        tag={Link}
-                        to="/theme-shop"
-                      >
+                  <NavItem>
+                    <NavLink
+                      to="/theme-shop"
+                      tag={Link}
+                    >
+                      <i className="ni ni-palette d-lg-none mr-1" />
+                      <span className="nav-link-inner--text">
                         테마 상점
-                      </DropdownItem>
-                    </DropdownMenu>
-                  </UncontrolledDropdown>
+                      </span>
+                    </NavLink>
+                  </NavItem>
+                </Nav>
 
-                  <NavItem className="d-none d-lg-block ml-lg-4">
-                    {!isLoggedIn ? (
-                      <Button
-                        className="btn-neutral btn-icon"
-                        color="default"
-                        tag={Link}
-                        to="/login"
-                      >
-                        <span className="btn-inner--icon">
-                          <i className="fa fa-user mr-2" />
-                        </span>
-                        <span className="nav-link-inner--text">로그인</span>
-                      </Button>
-                    ) : (
+                <Nav
+                  className="align-items-lg-center ml-lg-auto"
+                  navbar
+                >
+                  {!isLoggedIn ? (
+                    <>
+                      <NavItem>
+                        <Button
+                          className="btn-neutral btn-icon"
+                          color="default"
+                          to="/login"
+                          tag={Link}
+                        >
+                          <span className="btn-inner--icon">
+                            <i className="fa fa-sign-in mr-2" />
+                          </span>
+                          <span className="nav-link-inner--text">
+                            로그인
+                          </span>
+                        </Button>
+                      </NavItem>
+
+                      <NavItem className="ml-lg-2">
+                        <Button
+                          className="btn-neutral btn-icon"
+                          color="default"
+                          to="/register"
+                          tag={Link}
+                        >
+                          <span className="btn-inner--icon">
+                            <i className="fa fa-user-plus mr-2" />
+                          </span>
+                          <span className="nav-link-inner--text">
+                            회원가입
+                          </span>
+                        </Button>
+                      </NavItem>
+                    </>
+                  ) : (
+                    <NavItem>
                       <Button
                         className="btn-neutral btn-icon"
                         color="default"
@@ -174,10 +206,12 @@ class DemoNavbar extends React.Component {
                         <span className="btn-inner--icon">
                           <i className="fa fa-sign-out mr-2" />
                         </span>
-                        <span className="nav-link-inner--text">로그아웃</span>
+                        <span className="nav-link-inner--text">
+                          로그아웃
+                        </span>
                       </Button>
-                    )}
-                  </NavItem>
+                    </NavItem>
+                  )}
                 </Nav>
               </UncontrolledCollapse>
             </Container>
