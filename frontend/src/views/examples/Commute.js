@@ -18,17 +18,48 @@ import SimpleFooter from "components/Footers/SimpleFooter.js";
 
 class Commute extends React.Component {
   state = {
+    theme:
+      localStorage.getItem(
+        "selectedTheme"
+      ) || "default",
     startLocation: "",
     classStartPeriod: "오전",
     classStartClock: "",
     result: null,
     loading: false,
+    showPlaylist: false,
+    playlists: [],
+    pointResult: null,
+    arrivedToday: false,
+    arriving: false,
   };
 
   componentDidMount() {
     document.documentElement.scrollTop = 0;
     document.scrollingElement.scrollTop = 0;
     this.refs.main.scrollTop = 0;
+
+    const loginId =
+  localStorage.getItem("loginId");
+
+fetch(
+  `http://127.0.0.1:8000/themes?login_id=${loginId}`
+)
+  .then((response) =>
+    response.json()
+  )
+  .then((data) => {
+
+    localStorage.setItem(
+      "selectedTheme",
+      data?.selected_theme || "default"
+    );
+
+    this.setState({
+      theme:
+        data?.selected_theme || "default"
+    });
+  });
   }
 
   getTimeOptions = () => {
@@ -60,7 +91,14 @@ class Commute extends React.Component {
     const classStartTime = `${classStartPeriod} ${classStartClock}`;
     const loginId = localStorage.getItem("loginId") || "guest";
 
-    this.setState({ loading: true, result: null });
+    this.setState({
+      loading: true,
+      result: null,
+      pointResult: null,
+      showPlaylist: false,
+      playlists: [],
+      arrivedToday: false,
+    });
 
     try {
       const response = await fetch("http://127.0.0.1:8000/api/commute/calculate", {
@@ -88,9 +126,6 @@ class Commute extends React.Component {
         loading: false,
       });
 
-      const logsKey = `commuteLogs_${loginId}`;
-      const savedLogs = JSON.parse(localStorage.getItem(logsKey)) || [];
-      localStorage.setItem(logsKey, JSON.stringify([result, ...savedLogs]));
     } catch (error) {
       console.error(error);
       alert("백엔드 서버와 연결하지 못했습니다. 백엔드가 실행 중인지 확인해주세요.");
@@ -156,7 +191,7 @@ class Commute extends React.Component {
 
   render() {
     const timeOptions = this.getTimeOptions();
-    const { result, loading } = this.state;
+    const {result, loading, theme} = this.state;
 
     return (
       <>
@@ -164,7 +199,19 @@ class Commute extends React.Component {
 
         <main ref="main">
           <section className="section section-shaped section-lg">
-            <div className="shape shape-style-1 bg-gradient-default">
+            <div
+              className="shape shape-style-1"
+              style={{
+                background:
+                  theme === "pink"
+                    ? "linear-gradient(150deg,#ffb6c1 15%,#ff8fab 70%,#ff5e8a 94%)"
+                    : theme === "purple"
+                    ? "linear-gradient(150deg,#c8a2ff 15%,#a66cff 70%,#8b4dff 94%)"
+                    : theme === "blue"
+                    ? "linear-gradient(150deg,#7795f8 15%,#6772e5 70%,#555abf 94%)"
+                    : "linear-gradient(150deg,#172b4d 15%,#1a174d 70%,#22204d 94%)"
+              }}
+            >
               <span />
               <span />
               <span />
@@ -275,8 +322,235 @@ class Commute extends React.Component {
                       </Card>
 
                       {result.routes.map((route) => this.renderRouteCard(route))}
-                    </div>
-                  )}
+                      <div className="position-relative text-center mt-4">
+                        <Button
+                          onClick={async () => {
+                            const lateProbability =
+                              result.routes[0].lateProbability;
+                            const response = await fetch(
+                              `http://127.0.0.1:8000/playlist?late_probability=${lateProbability}`
+                            );
+                            const data = await response.json();
+                            this.setState((prevState) => ({
+                              playlists: data.playlist,
+                              showPlaylist: !prevState.showPlaylist,
+                            }));
+                          }}
+                          style={{
+                            position: "absolute",
+                            right: "-100px",
+                            top: "-100px",
+                            zIndex: "10",
+                            width: "70px",
+                            height: "70px",
+                            borderRadius: "50%",
+                            fontSize: "28px",
+                            padding: "0",
+                            backgroundColor: "white",
+                            border: "none",
+                          }}
+                        >
+                          🎵
+                        </Button>
+                      </div>
+                      <div className="text-center mt-5"
+                        style={{ marginLeft: "-7px" }}>
+                        <Button
+                          color="warning"
+                          size="lg"
+                          disabled={this.state.arrivedToday || this.state.arriving}
+                          onClick={async () => {
+                            const lateProbability =
+                              parseInt(result.routes[0].lateProbability);
+                            const commuteMinutes =
+                              parseInt(result.routes[0].totalMinutes);
+                            this.setState({
+                              arriving: true,
+                            });
+                            let data = null;
+                              try {
+                              const classStartTime =
+                                result.classStartTime;
+                              const loginId =
+                                localStorage.getItem("loginId");
+                              const response = await fetch(
+                                `http://127.0.0.1:8000/points?login_id=${loginId}&late_probability=${lateProbability}&commute_minutes=${commuteMinutes}&class_start_time=${classStartTime}`
+                              );
+                              data = await response.json();
+                            } catch (error) {
+                              console.error(error);
+                              this.setState({
+                                arriving: false,
+                              });
+                              return;
+                            }
+                            this.setState({
+                              arriving: false,
+                              pointResult: data,
+                              arrivedToday: true,
+                            });
+                          }}
+                        >
+                          학교 도착!
+                        </Button>
+                      </div>
+                      {this.state.pointResult && (
+                        <Card className="mt-4">
+                          <CardBody>
+                            <h4>
+                              🎉 포인트 / 뱃지 획득 결과
+                            </h4>
+                            <Row className="mt-4">
+                              {/* 왼쪽 */}
+                              <Col md="6">
+                                <h5>
+                                  획득 포인트
+                                </h5>
+                                <ul>
+                                  {this.state.pointResult?.point_result?.missions?.map(
+                                    (mission, index) => (
+                                      <li key={index}>
+                                        {mission}
+                                      </li>
+                                    )
+                                  )}
+                                </ul>
+                                {this.state.pointResult?.point_result?.earned_points > 0 ? (
+                                  <p className="mt-3">
+                                    +{this.state.pointResult?.point_result?.earned_points}P 획득
+                                  </p>
+                                ) : (
+                                  <p className="mt-3 text-muted">
+                                    이번에는 포인트를 얻지 못했어요!
+                                  </p>
+                                )}
+                              </Col>
+                              {/* 오른쪽 */}
+                              <Col md="6">
+                                <h5>
+                                  획득 뱃지
+                                </h5>
+                                {(
+                                  this.state.pointResult?.badge_result
+                                    ?.earned_badges?.length || 0
+                                ) === 0 ? (
+                                  <p className="mt-3 text-muted">
+                                    이번에는 뱃지를 얻지 못했어요!
+                                  </p>
+                                ) : (
+                                  <ul>
+
+                                  {this.state.pointResult?.badge_result
+                                    ?.earned_badges?.includes(
+                                      "여유로운 통학의 신"
+                                    ) && (
+                                    <li>
+                                      여유로운 통학의 신{" "}
+                                      {this.state.pointResult.badge_result.badge_data.easy_success_count}
+                                      / 30
+                                    </li>
+                                  )}
+
+                                  {this.state.pointResult?.badge_result
+                                    ?.earned_badges?.includes(
+                                      "아슬아슬 마스터"
+                                    ) && (
+                                    <li>
+                                      아슬아슬 마스터{" "}
+                                      {this.state.pointResult.badge_result.badge_data.hard_success_count}
+                                      / 10
+                                    </li>
+                                  )}
+
+                                  {this.state.pointResult?.badge_result
+                                    ?.earned_badges?.includes(
+                                      "비를 뚫는 자"
+                                    ) && (
+                                    <li>
+                                      비를 뚫는 자{" "}
+                                      {this.state.pointResult.badge_result.badge_data.rain_success_count}
+                                      / 10
+                                    </li>
+                                  )}
+
+                                  {this.state.pointResult?.badge_result
+                                    ?.earned_badges?.includes(
+                                      "새벽 통학생"
+                                    ) && (
+                                    <li>
+                                      새벽 통학생{" "}
+                                      {this.state.pointResult.badge_result.badge_data.early_morning_count}
+                                      / 20
+                                    </li>
+                                  )}
+
+                                  {this.state.pointResult?.badge_result
+                                    ?.earned_badges?.includes(
+                                      "강철 체력"
+                                    ) && (
+                                    <li>
+                                      강철 체력{" "}
+                                      {this.state.pointResult.badge_result.badge_data.long_distance_count}
+                                      / 20
+                                    </li>
+                                  )}
+                                </ul>
+                               )}
+                              </Col>
+                            </Row>
+                          </CardBody>
+                        </Card>
+                      )}
+                      {this.state.showPlaylist && (
+                        <Card className="mt-4 text-left">
+                          <CardBody>
+                            <h4>
+                              🎵 추천 플레이리스트
+                            </h4>
+                            <ul>
+                              {this.state.playlists?.map(
+                                (playlist, index) => (
+                                  <li key={index}>
+                                    <a
+                                      href={playlist.url}
+                                      target="_blank"
+                                      rel="noopener noreferrer"
+                                      style={{
+                                        color: "black",
+                                        textDecoration: "none",
+                                      }}
+                                    >
+                                      {playlist.title}
+                                    </a>
+                                  </li>
+                                )
+                              )}
+                            </ul>
+                          </CardBody>
+                        </Card>
+                      )}
+                      {result.routes.some(
+                        (route) => route.lateProbability <= 30
+                      ) && (
+                        <div className="text-center mt-5">
+                          <Button
+                            color="success"
+                            onClick={() =>
+                              window.open(
+                                "http://127.0.0.1:8000/game",
+                                "_blank"
+                              )
+                            }
+                          >
+                            🎮 미니게임
+                          </Button>
+                          <p className="text-white mt-3 text-center">
+                            지각 확률이 낮아 여유 시간이 있어 미니게임이 활성화되었습니다!
+                          </p>
+                        </div>
+                      )}
+                      </div>
+                    )}
                 </Col>
               </Row>
             </Container>

@@ -30,21 +30,60 @@ import DemoNavbar from "components/Navbars/DemoNavbar.js";
 import CardsFooter from "components/Footers/CardsFooter.js";
 
 class Logs extends React.Component {
-  componentDidMount() {
-    document.documentElement.scrollTop = 0;
-    document.scrollingElement.scrollTop = 0;
-    this.refs.main.scrollTop = 0;
-  }
 
-  getLogs = () => {
-    const loginId = localStorage.getItem("loginId") || "guest";
-    const logsKey = `commuteLogs_${loginId}`;
-
-    return JSON.parse(localStorage.getItem(logsKey)) || [];
+  state = {
+    logs: [],
+    theme:
+      localStorage.getItem(
+        "selectedTheme"
+      ) || "default"
   };
 
+  componentDidMount() {
+
+    document.documentElement.scrollTop = 0;
+    document.scrollingElement.scrollTop = 0;
+
+    if (this.refs.main) {
+      this.refs.main.scrollTop = 0;
+    }
+
+    const loginId =
+      localStorage.getItem("loginId") || "guest";
+
+    fetch(
+      `http://127.0.0.1:8000/logs?login_id=${loginId}`
+    )
+      .then((response) =>
+        response.json()
+      )
+      .then((data) => {
+        this.setState({
+          logs: data
+        });
+      });
+
+    fetch(
+      `http://127.0.0.1:8000/themes?login_id=${loginId}`
+    )
+      .then((response) =>
+        response.json()
+      )
+      .then((data) => {
+        this.setState({
+          theme:
+            data?.selected_theme || "default"
+        });
+      })
+      .catch(() => {
+        this.setState({
+          theme: "default"
+        });
+      });
+  }
+
   render() {
-    const logs = this.getLogs();
+      const {logs, theme} = this.state;
 
     return (
       <>
@@ -52,7 +91,19 @@ class Logs extends React.Component {
 
         <main ref="main">
           <section className="section section-shaped section-lg">
-            <div className="shape shape-style-1 bg-gradient-default">
+            <div
+              className="shape shape-style-1"
+              style={{
+                background:
+                  theme === "pink"
+                    ? "linear-gradient(150deg,#ffb6c1 15%,#ff8fab 70%,#ff5e8a 94%)"
+                    : theme === "purple"
+                    ? "linear-gradient(150deg,#c8a2ff 15%,#a66cff 70%,#8b4dff 94%)"
+                    : theme === "blue"
+                    ? "linear-gradient(150deg,#7795f8 15%,#6772e5 70%,#555abf 94%)"
+                    : "linear-gradient(150deg,#172b4d 15%,#1a174d 70%,#22204d 94%)"
+              }}
+            >
               <span />
               <span />
               <span />
@@ -92,33 +143,20 @@ class Logs extends React.Component {
                           </thead>
                           <tbody>
                             {logs.map((log, index) => {
-                              const bestRoute = log.routes && log.routes.length > 0 ? log.routes[0] : null;
 
                               return (
                                 <tr key={index}>
                                   <td>{log.checkedAt}</td>
                                   <td>{log.startLocation}</td>
                                   <td>{log.classStartTime}</td>
-                                  <td>{bestRoute ? bestRoute.routeSummary : "-"}</td>
-                                  <td>{bestRoute ? `${bestRoute.totalMinutes}분` : "-"}</td>
-                                  <td>{bestRoute ? `${bestRoute.lateProbability}%` : "-"}</td>
+                                  <td>{log.routeSummary}</td>
+                                  <td>{log.totalMinutes}분</td>
+                                  <td>{log.lateProbability}%</td>
                                 </tr>
                               );
                             })}
                           </tbody>
 
-                          <tbody>
-                            {logs.map((log, index) => (
-                              <tr key={index}>
-                                <td>{log.checkedAt}</td>
-                                <td>{log.busStop}</td>
-                                <td>{log.busNumber}</td>
-                                <td>{log.classStartTime}</td>
-                                <td>{log.arrivalMinutes}분 후</td>
-                                <td>{log.lateProbability}%</td>
-                              </tr>
-                            ))}
-                          </tbody>
                         </Table>
                       )}
                     </CardBody>
@@ -128,7 +166,6 @@ class Logs extends React.Component {
             </Container>
           </section>
         </main>
-
         <CardsFooter />
       </>
     );

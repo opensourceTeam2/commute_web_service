@@ -21,12 +21,14 @@ import { BrowserRouter, Route, Routes, Navigate } from "react-router-dom";
 
 import "assets/vendor/nucleo/css/nucleo.css";
 import "assets/vendor/font-awesome/css/font-awesome.min.css";
-import "assets/scss/argon-design-system-react.scss?v1.1.0";
+import "assets/scss/argon-design-system-react.scss";
 
 import Landing from "views/examples/Landing.js";
 import Login from "views/examples/Login.js";
 import Commute from "views/examples/Commute.js";
 import Logs from "views/Logs.js";
+import Badge from "views/examples/Badge.js";
+import ThemeShop from "views/examples/ThemeShop.js";
 
 // 로그인하지 않은 사용자를 /login으로 보냄
 function PrivateRoute({ children }) {
@@ -61,6 +63,22 @@ root.render(
         element={
           <PrivateRoute>
             <Logs />
+          </PrivateRoute>
+        }
+      />
+      <Route
+        path="/badge"
+        element={
+          <PrivateRoute>
+            <Badge />
+          </PrivateRoute>
+        }
+      />
+      <Route
+        path="/theme-shop"
+        element={
+          <PrivateRoute>
+            <ThemeShop />
           </PrivateRoute>
         }
       />
