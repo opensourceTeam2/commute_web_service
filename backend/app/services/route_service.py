@@ -1,4 +1,5 @@
 from datetime import datetime, timedelta
+from app.clients.guide.guide_message import make_guide_message
 
 from app.clients.kakao_local_api import get_place_coordinate
 from app.clients.odsay_api import search_public_transit_routes
@@ -251,8 +252,8 @@ def recommend_commute_routes(start_location, class_start_time):
         end_y=destination_place["y"],
     )
 
-    print("ODsay 응답 타입:", type(odsay_data))
-    print("ODsay 응답 내용:", odsay_data)
+    #print("ODsay 응답 타입:", type(odsay_data))
+    #print("ODsay 응답 내용:", odsay_data)
 
     paths = get_paths_from_odsay_data(odsay_data)
 
@@ -285,8 +286,15 @@ def recommend_commute_routes(start_location, class_start_time):
     for index, route in enumerate(top_three, start=1):
         route["rank"] = index
 
+    try:
+        guide_messages = make_guide_message()
+    except Exception as error:
+        print("안내문구 생성 실패:", error)
+        guide_messages = ["날씨/미세먼지 안내를 불러오지 못했습니다."]
+
     return {
         "startPlace": start_place,
         "destinationPlace": destination_place,
         "routes": top_three,
+        "guideMessages": guide_messages,
     }

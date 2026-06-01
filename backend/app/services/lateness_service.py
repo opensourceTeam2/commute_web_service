@@ -1,5 +1,4 @@
 from datetime import datetime, timedelta
-from app.clients.guide.guide_message import make_guide_message
 from app.clients.kakao_local_api import get_place_coordinate
 from app.clients.odsay_api import search_public_transit_routes
 
@@ -147,12 +146,9 @@ def calculate_lateness_probability(
     else:
         status_message = "지각 가능성이 높습니다. 다른 경로를 고려하세요."
 
-    guide_messages = make_guide_message()
-
     return {
         "lateProbability": probability,
         "statusMessage": status_message,
-        "guideMessages": guide_messages,
         "reasons": reasons,
         "detail": {
             "totalMinutes": total_minutes,

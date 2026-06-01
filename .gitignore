@@ -1,11 +1,22 @@
+# Python
 venv/
 .venv/
 __pycache__/
 *.pyc
-.env
 
+# Environment / secrets
+.env
 backend/app/clients/api_keys.py
 
+# Database
 *.db
 backend/*.db
 backend/commute.db
+
+# Cache
+.cache/
+
+# Frontend
+frontend/node_modules/
+frontend/build/
+frontend/package-lock.json

@@ -1,12 +1,9 @@
 from app.clients.api_keys import ODSAY_API_KEY
 import requests
-
+import json
 
 
 def get_odsay_error_message(error):
-    """
-    ODsay error가 dict로 오든 list로 오든 안전하게 메시지를 꺼낸다.
-    """
     default_message = "대중교통 경로 검색에 실패했습니다."
 
     if error is None:
@@ -30,7 +27,6 @@ def get_odsay_error_message(error):
                     or item.get("msg")
                     or item.get("errorMessage")
                 )
-
                 if message:
                     messages.append(message)
             else:
@@ -61,24 +57,22 @@ def search_public_transit_routes(start_x, start_y, end_x, end_y):
         timeout=10,
     )
 
-    print("ODsay status_code:", response.status_code)
-    print("ODsay response_text:", response.text)
-
     if response.status_code != 200:
         raise RuntimeError(
-            f"ODsay API 요청 실패: {response.status_code} / {response.text}"
+            f"ODsay API 요청 실패: {response.status_code}"
         )
 
-    data = response.json()
+    try:
+        data = response.json()
+    except json.JSONDecodeError:
+        raise RuntimeError(
+            "ODsay API 응답이 JSON 형식이 아닙니다. API 키 또는 요청 좌표를 확인해주세요."
+        )
 
     error = data.get("error")
 
     if error:
         message = get_odsay_error_message(error)
-
-        print("ODsay API 오류 응답:", error)
-        print("ODsay API 오류 메시지:", message)
-
         raise RuntimeError(message)
 
     return data

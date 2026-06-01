@@ -107,9 +107,9 @@ fetch(
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          startLocation: startLocation,
-          classStartTime: classStartTime,
-          loginId: loginId,
+          startLocation,
+          classStartTime,
+          loginId,
         }),
       });
 

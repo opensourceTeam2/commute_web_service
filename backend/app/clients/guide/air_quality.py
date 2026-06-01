@@ -1,11 +1,16 @@
 import requests
+import json
+
+from app.clients.api_keys import WEATHER_API_KEY
 
 
-SERVICE_KEY = "KEY"
-
-
-# 미세먼지 조회
 def get_air_data():
+    if not WEATHER_API_KEY or WEATHER_API_KEY == "key":
+        print("미세먼지 API 키가 없어 기본값으로 처리합니다.")
+        return {
+            "pm10": 0,
+            "status": "unknown",
+        }
 
     url = (
         "http://apis.data.go.kr/"
@@ -14,71 +19,61 @@ def get_air_data():
     )
 
     params = {
-
-        "serviceKey": SERVICE_KEY,
+        "serviceKey": WEATHER_API_KEY,
         "returnType": "json",
-        "stationName": "수지",  # 단국대 죽전 근처
+        "stationName": "수지",
         "dataTerm": "DAILY",
         "ver": "1.3",
         "numOfRows": 1,
-        "pageNo": 1
+        "pageNo": 1,
     }
 
-    response = requests.get(
-        url,
-        params=params
-    )
+    response = requests.get(url, params=params, timeout=10)
 
-    data = response.json()
+    #print("Air status_code:", response.status_code)
+    #print("Air content_type:", response.headers.get("Content-Type"))
+    #print("Air response_text:", response.text[:500])
 
-    item = (
-        data["response"]
-        ["body"]
-        ["items"][0]
-    )
+    if response.status_code != 200:
+        return {
+            "pm10": 0,
+            "status": "unknown",
+        }
 
-    pm10 = item["pm10Value"]
+    try:
+        data = response.json()
+    except json.JSONDecodeError:
+        return {
+            "pm10": 0,
+            "status": "unknown",
+        }
 
-    # 값 없을 경우
-    if pm10 == "-":
+    try:
+        item = data["response"]["body"]["items"][0]
+        pm10 = item["pm10Value"]
 
-        pm10 = 0
+        if pm10 == "-":
+            pm10 = 0
+        else:
+            pm10 = int(pm10)
 
-    else:
+        if pm10 <= 30:
+            status = "good"
+        elif pm10 <= 80:
+            status = "normal"
+        elif pm10 <= 150:
+            status = "bad"
+        else:
+            status = "very_bad"
 
-        pm10 = int(pm10)
+        return {
+            "pm10": pm10,
+            "status": status,
+        }
 
-    
-    # 상태 판별
-    if pm10 <= 30:
-
-        status = "good"
-
-    elif pm10 <= 80:
-
-        status = "normal"
-
-    elif pm10 <= 150:
-
-        status = "bad"
-
-    else:
-
-        status = "very_bad"
-
-    return {
-
-        "pm10": pm10,
-        "status": status
-    }
-
-
-
-# 테스트 코드
-if __name__ == "__main__":
-
-    print("\n===== 미세먼지 정보 =====\n")
-
-    result = get_air_data()
-
-    print(result)
+    except Exception as error:
+        print("미세먼지 데이터 파싱 실패:", error)
+        return {
+            "pm10": 0,
+            "status": "unknown",
+        }
