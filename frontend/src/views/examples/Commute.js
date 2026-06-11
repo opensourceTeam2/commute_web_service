@@ -1,4 +1,5 @@
 import React from "react";
+
 import {
   Button,
   Card,
@@ -18,10 +19,7 @@ import SimpleFooter from "components/Footers/SimpleFooter.js";
 
 class Commute extends React.Component {
   state = {
-    theme:
-      localStorage.getItem(
-        "selectedTheme"
-      ) || "default",
+    theme: localStorage.getItem("selectedTheme") || "default",
     startLocation: "",
     classStartPeriod: "오전",
     classStartClock: "",
@@ -32,34 +30,38 @@ class Commute extends React.Component {
     pointResult: null,
     arrivedToday: false,
     arriving: false,
+
+    // 추천 경로별 최대화/최소화 상태
+    // false 또는 없음 = 최소화 상태
+    // true = 최대화 상태
+    expandedRouteRanks: {},
   };
 
   componentDidMount() {
     document.documentElement.scrollTop = 0;
     document.scrollingElement.scrollTop = 0;
-    this.refs.main.scrollTop = 0;
 
-    const loginId =
-  localStorage.getItem("loginId");
+    if (this.refs.main) {
+      this.refs.main.scrollTop = 0;
+    }
 
-fetch(
-  `http://127.0.0.1:8000/themes?login_id=${loginId}`
-)
-  .then((response) =>
-    response.json()
-  )
-  .then((data) => {
+    const loginId = localStorage.getItem("loginId") || "guest";
 
-    localStorage.setItem(
-      "selectedTheme",
-      data?.selected_theme || "default"
-    );
+    fetch(`http://127.0.0.1:8000/themes?login_id=${loginId}`)
+      .then((response) => response.json())
+      .then((data) => {
+        localStorage.setItem(
+          "selectedTheme",
+          data?.selected_theme || "default"
+        );
 
-    this.setState({
-      theme:
-        data?.selected_theme || "default"
-    });
-  });
+        this.setState({
+          theme: data?.selected_theme || "default",
+        });
+      })
+      .catch((error) => {
+        console.error(error);
+      });
   }
 
   getTimeOptions = () => {
@@ -72,6 +74,24 @@ fetch(
     }
 
     return times;
+  };
+
+  getThemeBackground = () => {
+    const { theme } = this.state;
+
+    if (theme === "pink") {
+      return "linear-gradient(150deg,#ffb6c1 15%,#ff8fab 70%,#ff5e8a 94%)";
+    }
+
+    if (theme === "purple") {
+      return "linear-gradient(150deg,#c8a2ff 15%,#a66cff 70%,#8b4dff 94%)";
+    }
+
+    if (theme === "blue") {
+      return "linear-gradient(150deg,#7795f8 15%,#6772e5 70%,#555abf 94%)";
+    }
+
+    return "linear-gradient(150deg,#172b4d 15%,#1a174d 70%,#22204d 94%)";
   };
 
   handleCalculate = async (event) => {
@@ -98,6 +118,8 @@ fetch(
       showPlaylist: false,
       playlists: [],
       arrivedToday: false,
+      arriving: false,
+      expandedRouteRanks: {},
     });
 
     try {
@@ -113,76 +135,429 @@ fetch(
         }),
       });
 
-      const result = await response.json();
+      let result = null;
 
-      if (!response.ok) {
-        alert(result.detail || "통학 계산에 실패했습니다.");
+      try {
+        result = await response.json();
+      } catch (jsonError) {
+        console.error(jsonError);
+        alert("서버 응답을 읽지 못했습니다.");
         this.setState({ loading: false });
         return;
       }
 
+      if (!response.ok) {
+        alert(result?.detail || "통학 계산에 실패했습니다.");
+        this.setState({ loading: false });
+        return;
+      }
+
+      const safeResult = {
+        ...result,
+        routes: Array.isArray(result?.routes) ? result.routes : [],
+      };
+
       this.setState({
-        result: result,
+        result: safeResult,
         loading: false,
       });
-
     } catch (error) {
       console.error(error);
+
       alert("백엔드 서버와 연결하지 못했습니다. 백엔드가 실행 중인지 확인해주세요.");
-      this.setState({ loading: false });
+
+      this.setState({
+        loading: false,
+      });
+    }
+  };
+
+  toggleRouteDetail = (routeRank) => {
+    this.setState((prevState) => ({
+      expandedRouteRanks: {
+        ...prevState.expandedRouteRanks,
+        [routeRank]: !prevState.expandedRouteRanks[routeRank],
+      },
+    }));
+  };
+
+  getLateColor = (lateProbability) => {
+    const probability = Number(lateProbability);
+
+    if (Number.isNaN(probability)) {
+      return "#8898aa";
+    }
+
+    if (probability > 60) {
+      return "#f5365c";
+    }
+
+    if (probability > 30) {
+      return "#fb6340";
+    }
+
+    return "#2dce89";
+  };
+
+  getSafeRoutes = () => {
+    const { result } = this.state;
+
+    if (!result || !Array.isArray(result.routes)) {
+      return [];
+    }
+
+    return result.routes;
+  };
+
+  getFirstRoute = () => {
+    const routes = this.getSafeRoutes();
+
+    if (routes.length === 0) {
+      return null;
+    }
+
+    return routes[0];
+  };
+
+  handlePlaylistClick = async () => {
+    const firstRoute = this.getFirstRoute();
+
+    if (!firstRoute) {
+      alert("추천 경로가 없어 플레이리스트를 불러올 수 없습니다.");
+      return;
+    }
+
+    try {
+      const lateProbability = firstRoute.lateProbability;
+
+      const response = await fetch(
+        `http://127.0.0.1:8000/playlist?late_probability=${lateProbability}`
+      );
+
+      const data = await response.json();
+
+      this.setState((prevState) => ({
+        playlists: Array.isArray(data?.playlist) ? data.playlist : [],
+        showPlaylist: !prevState.showPlaylist,
+      }));
+    } catch (error) {
+      console.error(error);
+      alert("플레이리스트를 불러오지 못했습니다.");
+    }
+  };
+
+  handleArriveClick = async () => {
+    const { result } = this.state;
+    const firstRoute = this.getFirstRoute();
+
+    if (!firstRoute) {
+      alert("추천 경로가 없어 포인트를 계산할 수 없습니다.");
+      return;
+    }
+
+    const lateProbability = parseInt(firstRoute.lateProbability, 10);
+    const commuteMinutes = parseInt(firstRoute.totalMinutes, 10);
+    const classStartTime = result?.classStartTime || "";
+    const loginId = localStorage.getItem("loginId") || "guest";
+
+    this.setState({
+      arriving: true,
+    });
+
+    try {
+      const response = await fetch(
+        `http://127.0.0.1:8000/points?login_id=${loginId}&late_probability=${lateProbability}&commute_minutes=${commuteMinutes}&class_start_time=${classStartTime}`
+      );
+
+      const data = await response.json();
+
+      this.setState({
+        arriving: false,
+        pointResult: data,
+        arrivedToday: true,
+      });
+    } catch (error) {
+      console.error(error);
+
+      this.setState({
+        arriving: false,
+      });
+
+      alert("포인트 / 뱃지 정보를 불러오지 못했습니다.");
     }
   };
 
   renderRouteCard = (route) => {
+    const routeRank = route?.rank || "정보 없음";
+    const isExpanded = !!this.state.expandedRouteRanks[routeRank];
+
+    const routeSummary = route?.routeSummary || "경로 정보 없음";
+    const totalMinutes =
+      route?.totalMinutes !== undefined && route?.totalMinutes !== null
+        ? `${route.totalMinutes}분`
+        : "정보 없음";
+    const expectedArrivalTime = route?.expectedArrivalTime || "정보 없음";
+    const transferCount =
+      route?.transferCount !== undefined && route?.transferCount !== null
+        ? `${route.transferCount}회`
+        : "정보 없음";
+    const lateProbability =
+      route?.lateProbability !== undefined && route?.lateProbability !== null
+        ? `${route.lateProbability}%`
+        : "정보 없음";
+    const statusMessage = route?.statusMessage || "안내 정보 없음";
+
+    const steps = Array.isArray(route?.steps) ? route.steps : [];
+    const reasons = Array.isArray(route?.reasons) ? route.reasons : [];
+
+    const lateColor = this.getLateColor(route?.lateProbability);
+
     return (
-      <Card className="shadow mb-4" key={route.rank}>
+      <Card
+        className="shadow mb-4"
+        key={routeRank}
+        style={{
+          borderRadius: "18px",
+          overflow: "hidden",
+        }}
+      >
         <CardBody>
-          <h4 className="mb-3">
-            추천 경로 {route.rank}
-          </h4>
+          <Row className="align-items-center">
+            <Col md="7">
+              <h4 className="mb-2">추천 경로 {routeRank}</h4>
 
-          <p className="mb-2">
-            <strong>경로:</strong> {route.routeSummary}
-          </p>
+              <p className="mb-2 text-muted">
+                <strong>경로:</strong> {routeSummary}
+              </p>
 
-          <p className="mb-2">
-            <strong>예상 소요 시간:</strong> {route.totalMinutes}분
-          </p>
+              <p className="mb-0 text-muted">
+                <strong>예상 소요 시간:</strong> {totalMinutes}
+              </p>
+            </Col>
 
-          <p className="mb-2">
-            <strong>예상 도착 시간:</strong> {route.expectedArrivalTime}
-          </p>
+            <Col md="3" className="mt-3 mt-md-0 text-md-right">
+              <span
+                style={{
+                  display: "inline-block",
+                  backgroundColor: lateColor,
+                  color: "white",
+                  borderRadius: "20px",
+                  padding: "8px 14px",
+                  fontWeight: "bold",
+                  fontSize: "14px",
+                }}
+              >
+                지각 확률 {lateProbability}
+              </span>
+            </Col>
 
-          <p className="mb-2">
-            <strong>환승 횟수:</strong> {route.transferCount}회
-          </p>
+            <Col md="2" className="mt-3 mt-md-0 text-md-right">
+              <Button
+                color={isExpanded ? "secondary" : "primary"}
+                size="sm"
+                onClick={() => this.toggleRouteDetail(routeRank)}
+              >
+                {isExpanded ? "최소화" : "최대화"}
+              </Button>
+            </Col>
+          </Row>
 
-          <p className="mb-2">
-            <strong>지각 확률:</strong> {route.lateProbability}%
-          </p>
+          {isExpanded && (
+            <div className="mt-4">
+              <hr />
 
-          <p className="mb-3">
-            <strong>안내:</strong> {route.statusMessage}
-          </p>
+              <Row>
+                <Col md="6">
+                  <p className="mb-2">
+                    <strong>예상 도착 시간:</strong> {expectedArrivalTime}
+                  </p>
+                </Col>
 
-          <hr />
+                <Col md="6">
+                  <p className="mb-2">
+                    <strong>환승 횟수:</strong> {transferCount}
+                  </p>
+                </Col>
+              </Row>
 
-          <h6>상세 이동 순서</h6>
-          <ol>
-            {route.steps.map((step, index) => (
-              <li key={index}>{step}</li>
-            ))}
-          </ol>
+              <p className="mb-3">
+                <strong>안내:</strong> {statusMessage}
+              </p>
 
-          {route.reasons && route.reasons.length > 0 && (
-            <>
-              <h6>계산 이유</h6>
-              <ul>
-                {route.reasons.map((reason, index) => (
-                  <li key={index}>{reason}</li>
-                ))}
-              </ul>
-            </>
+              <div
+                style={{
+                  backgroundColor: "#f6f9fc",
+                  borderRadius: "14px",
+                  padding: "16px",
+                  marginTop: "16px",
+                }}
+              >
+                <h6 className="mb-3">상세 이동 순서</h6>
+
+                {steps.length > 0 ? (
+                  <ol className="mb-0">
+                    {steps.map((step, index) => (
+                      <li key={index} className="mb-2">
+                        {step}
+                      </li>
+                    ))}
+                  </ol>
+                ) : (
+                  <p className="text-muted mb-0">상세 이동 순서가 없습니다.</p>
+                )}
+              </div>
+
+              {reasons.length > 0 && (
+                <div
+                  style={{
+                    backgroundColor: "#fffaf0",
+                    borderRadius: "14px",
+                    padding: "16px",
+                    marginTop: "16px",
+                  }}
+                >
+                  <h6 className="mb-3">계산 이유</h6>
+
+                  <ul className="mb-0">
+                    {reasons.map((reason, index) => (
+                      <li key={index} className="mb-2">
+                        {reason}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+            </div>
+          )}
+        </CardBody>
+      </Card>
+    );
+  };
+
+  renderPointResult = () => {
+    const { pointResult } = this.state;
+
+    if (!pointResult) {
+      return null;
+    }
+
+    const missions = Array.isArray(pointResult?.point_result?.missions)
+      ? pointResult.point_result.missions
+      : [];
+    const earnedPoints = pointResult?.point_result?.earned_points || 0;
+    const earnedBadges = Array.isArray(pointResult?.badge_result?.earned_badges)
+      ? pointResult.badge_result.earned_badges
+      : [];
+    const badgeData = pointResult?.badge_result?.badge_data || {};
+
+    return (
+      <Card className="mt-4">
+        <CardBody>
+          <h4>포인트 / 뱃지 획득 결과</h4>
+
+          <Row className="mt-4">
+            <Col md="6">
+              <h5>획득 포인트</h5>
+
+              {missions.length > 0 ? (
+                <ul>
+                  {missions.map((mission, index) => (
+                    <li key={index}>{mission}</li>
+                  ))}
+                </ul>
+              ) : (
+                <p className="text-muted">수행한 미션 정보가 없습니다.</p>
+              )}
+
+              {earnedPoints > 0 ? (
+                <p className="mt-3">+{earnedPoints}P 획득</p>
+              ) : (
+                <p className="mt-3 text-muted">
+                  이번에는 포인트를 얻지 못했어요!
+                </p>
+              )}
+            </Col>
+
+            <Col md="6">
+              <h5>획득 뱃지</h5>
+
+              {earnedBadges.length === 0 ? (
+                <p className="mt-3 text-muted">
+                  이번에는 뱃지를 얻지 못했어요!
+                </p>
+              ) : (
+                <ul>
+                  {earnedBadges.includes("여유로운 통학의 신") && (
+                    <li>
+                      여유로운 통학의 신 {badgeData.easy_success_count || 0} /
+                      30
+                    </li>
+                  )}
+
+                  {earnedBadges.includes("아슬아슬 마스터") && (
+                    <li>
+                      아슬아슬 마스터 {badgeData.hard_success_count || 0} / 10
+                    </li>
+                  )}
+
+                  {earnedBadges.includes("비를 뚫는 자") && (
+                    <li>
+                      비를 뚫는 자 {badgeData.rain_success_count || 0} / 10
+                    </li>
+                  )}
+
+                  {earnedBadges.includes("새벽 통학생") && (
+                    <li>
+                      새벽 통학생 {badgeData.early_morning_count || 0} / 20
+                    </li>
+                  )}
+
+                  {earnedBadges.includes("강철 체력") && (
+                    <li>
+                      강철 체력 {badgeData.long_distance_count || 0} / 20
+                    </li>
+                  )}
+                </ul>
+              )}
+            </Col>
+          </Row>
+        </CardBody>
+      </Card>
+    );
+  };
+
+  renderPlaylist = () => {
+    const { showPlaylist, playlists } = this.state;
+
+    if (!showPlaylist) {
+      return null;
+    }
+
+    return (
+      <Card className="mt-4 text-left">
+        <CardBody>
+          <h4>추천 플레이리스트</h4>
+
+          {playlists.length > 0 ? (
+            <ul>
+              {playlists.map((playlist, index) => (
+                <li key={index}>
+                  <a
+                    href={playlist.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    style={{
+                      color: "black",
+                      textDecoration: "none",
+                    }}
+                  >
+                    {playlist.title}
+                  </a>
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <p className="text-muted mb-0">추천 플레이리스트가 없습니다.</p>
           )}
         </CardBody>
       </Card>
@@ -191,7 +566,13 @@ fetch(
 
   render() {
     const timeOptions = this.getTimeOptions();
-    const {result, loading, theme} = this.state;
+    const { result, loading, theme } = this.state;
+    const routes = this.getSafeRoutes();
+    const firstRoute = this.getFirstRoute();
+
+    const canPlayMiniGame = routes.some(
+      (route) => Number(route?.lateProbability) <= 30
+    );
 
     return (
       <>
@@ -202,14 +583,7 @@ fetch(
             <div
               className="shape shape-style-1"
               style={{
-                background:
-                  theme === "pink"
-                    ? "linear-gradient(150deg,#ffb6c1 15%,#ff8fab 70%,#ff5e8a 94%)"
-                    : theme === "purple"
-                    ? "linear-gradient(150deg,#c8a2ff 15%,#a66cff 70%,#8b4dff 94%)"
-                    : theme === "blue"
-                    ? "linear-gradient(150deg,#7795f8 15%,#6772e5 70%,#555abf 94%)"
-                    : "linear-gradient(150deg,#172b4d 15%,#1a174d 70%,#22204d 94%)"
+                background: this.getThemeBackground(theme),
               }}
             >
               <span />
@@ -230,13 +604,15 @@ fetch(
                       <h3 className="mb-4">통학 도우미 실행</h3>
 
                       <p>
-                        출발 위치와 수업 시작 시간을 입력하면 단국대학교까지 갈 수 있는
-                        경로 중 지각 확률이 낮은 3가지를 추천합니다.
+                        출발 위치와 수업 시작 시간을 입력하면 단국대학교까지
+                        갈 수 있는 경로 중 지각 확률이 낮은 3가지를
+                        추천합니다.
                       </p>
 
                       <Form onSubmit={this.handleCalculate}>
                         <FormGroup>
                           <Label>출발 위치</Label>
+
                           <Input
                             type="text"
                             placeholder="예: 미금역, 죽전역, 수지구청역, 강남역"
@@ -249,6 +625,7 @@ fetch(
 
                         <FormGroup>
                           <Label>수업 시작 시간</Label>
+
                           <Row>
                             <Col md="4">
                               <Input
@@ -276,6 +653,7 @@ fetch(
                                 }
                               >
                                 <option value="">시간을 선택하세요</option>
+
                                 {timeOptions.map((time) => (
                                   <option key={time} value={time}>
                                     {time}
@@ -306,232 +684,83 @@ fetch(
                       <Card className="shadow mb-4">
                         <CardBody>
                           <p>
-                            <strong>출발 위치:</strong> {result.startLocation}
+                            <strong>출발 위치:</strong>{" "}
+                            {result?.startLocation || "정보 없음"}
                           </p>
+
                           <p>
-                            <strong>도착지:</strong> {result.destination}
+                            <strong>도착지:</strong>{" "}
+                            {result?.destination || "정보 없음"}
                           </p>
+
                           <p>
                             <strong>수업 시작 시간:</strong>{" "}
-                            {result.classStartTime}
+                            {result?.classStartTime || "정보 없음"}
                           </p>
-                          <p>
-                            <strong>조회 시간:</strong> {result.checkedAt}
+
+                          <p className="mb-0">
+                            <strong>조회 시간:</strong>{" "}
+                            {result?.checkedAt || "정보 없음"}
                           </p>
                         </CardBody>
                       </Card>
 
-                      {result.routes.map((route) => this.renderRouteCard(route))}
-                      <div className="position-relative text-center mt-4">
-                        <Button
-                          onClick={async () => {
-                            const lateProbability =
-                              result.routes[0].lateProbability;
-                            const response = await fetch(
-                              `http://127.0.0.1:8000/playlist?late_probability=${lateProbability}`
-                            );
-                            const data = await response.json();
-                            this.setState((prevState) => ({
-                              playlists: data.playlist,
-                              showPlaylist: !prevState.showPlaylist,
-                            }));
-                          }}
-                          style={{
-                            position: "absolute",
-                            right: "-100px",
-                            top: "-100px",
-                            zIndex: "10",
-                            width: "70px",
-                            height: "70px",
-                            borderRadius: "50%",
-                            fontSize: "28px",
-                            padding: "0",
-                            backgroundColor: "white",
-                            border: "none",
-                          }}
+                      {routes.length > 0 ? (
+                        routes.map((route) => this.renderRouteCard(route))
+                      ) : (
+                        <Card className="shadow mb-4">
+                          <CardBody>
+                            <p className="text-muted mb-0">
+                              추천 가능한 경로가 없습니다.
+                            </p>
+                          </CardBody>
+                        </Card>
+                      )}
+
+                      {firstRoute && (
+                        <div className="position-relative text-center mt-4">
+                          <Button
+                            onClick={this.handlePlaylistClick}
+                            style={{
+                              position: "absolute",
+                              right: "-100px",
+                              top: "-100px",
+                              zIndex: "10",
+                              width: "70px",
+                              height: "70px",
+                              borderRadius: "50%",
+                              fontSize: "28px",
+                              padding: "0",
+                              backgroundColor: "white",
+                              border: "none",
+                            }}
+                          />
+                        </div>
+                      )}
+
+                      {firstRoute && (
+                        <div
+                          className="text-center mt-5"
+                          style={{ marginLeft: "-7px" }}
                         >
-                          🎵
-                        </Button>
-                      </div>
-                      <div className="text-center mt-5"
-                        style={{ marginLeft: "-7px" }}>
-                        <Button
-                          color="warning"
-                          size="lg"
-                          disabled={this.state.arrivedToday || this.state.arriving}
-                          onClick={async () => {
-                            const lateProbability =
-                              parseInt(result.routes[0].lateProbability);
-                            const commuteMinutes =
-                              parseInt(result.routes[0].totalMinutes);
-                            this.setState({
-                              arriving: true,
-                            });
-                            let data = null;
-                              try {
-                              const classStartTime =
-                                result.classStartTime;
-                              const loginId =
-                                localStorage.getItem("loginId");
-                              const response = await fetch(
-                                `http://127.0.0.1:8000/points?login_id=${loginId}&late_probability=${lateProbability}&commute_minutes=${commuteMinutes}&class_start_time=${classStartTime}`
-                              );
-                              data = await response.json();
-                            } catch (error) {
-                              console.error(error);
-                              this.setState({
-                                arriving: false,
-                              });
-                              return;
+                          <Button
+                            color="warning"
+                            size="lg"
+                            disabled={
+                              this.state.arrivedToday || this.state.arriving
                             }
-                            this.setState({
-                              arriving: false,
-                              pointResult: data,
-                              arrivedToday: true,
-                            });
-                          }}
-                        >
-                          학교 도착!
-                        </Button>
-                      </div>
-                      {this.state.pointResult && (
-                        <Card className="mt-4">
-                          <CardBody>
-                            <h4>
-                              🎉 포인트 / 뱃지 획득 결과
-                            </h4>
-                            <Row className="mt-4">
-                              {/* 왼쪽 */}
-                              <Col md="6">
-                                <h5>
-                                  획득 포인트
-                                </h5>
-                                <ul>
-                                  {this.state.pointResult?.point_result?.missions?.map(
-                                    (mission, index) => (
-                                      <li key={index}>
-                                        {mission}
-                                      </li>
-                                    )
-                                  )}
-                                </ul>
-                                {this.state.pointResult?.point_result?.earned_points > 0 ? (
-                                  <p className="mt-3">
-                                    +{this.state.pointResult?.point_result?.earned_points}P 획득
-                                  </p>
-                                ) : (
-                                  <p className="mt-3 text-muted">
-                                    이번에는 포인트를 얻지 못했어요!
-                                  </p>
-                                )}
-                              </Col>
-                              {/* 오른쪽 */}
-                              <Col md="6">
-                                <h5>
-                                  획득 뱃지
-                                </h5>
-                                {(
-                                  this.state.pointResult?.badge_result
-                                    ?.earned_badges?.length || 0
-                                ) === 0 ? (
-                                  <p className="mt-3 text-muted">
-                                    이번에는 뱃지를 얻지 못했어요!
-                                  </p>
-                                ) : (
-                                  <ul>
-
-                                  {this.state.pointResult?.badge_result
-                                    ?.earned_badges?.includes(
-                                      "여유로운 통학의 신"
-                                    ) && (
-                                    <li>
-                                      여유로운 통학의 신{" "}
-                                      {this.state.pointResult.badge_result.badge_data.easy_success_count}
-                                      / 30
-                                    </li>
-                                  )}
-
-                                  {this.state.pointResult?.badge_result
-                                    ?.earned_badges?.includes(
-                                      "아슬아슬 마스터"
-                                    ) && (
-                                    <li>
-                                      아슬아슬 마스터{" "}
-                                      {this.state.pointResult.badge_result.badge_data.hard_success_count}
-                                      / 10
-                                    </li>
-                                  )}
-
-                                  {this.state.pointResult?.badge_result
-                                    ?.earned_badges?.includes(
-                                      "비를 뚫는 자"
-                                    ) && (
-                                    <li>
-                                      비를 뚫는 자{" "}
-                                      {this.state.pointResult.badge_result.badge_data.rain_success_count}
-                                      / 10
-                                    </li>
-                                  )}
-
-                                  {this.state.pointResult?.badge_result
-                                    ?.earned_badges?.includes(
-                                      "새벽 통학생"
-                                    ) && (
-                                    <li>
-                                      새벽 통학생{" "}
-                                      {this.state.pointResult.badge_result.badge_data.early_morning_count}
-                                      / 20
-                                    </li>
-                                  )}
-
-                                  {this.state.pointResult?.badge_result
-                                    ?.earned_badges?.includes(
-                                      "강철 체력"
-                                    ) && (
-                                    <li>
-                                      강철 체력{" "}
-                                      {this.state.pointResult.badge_result.badge_data.long_distance_count}
-                                      / 20
-                                    </li>
-                                  )}
-                                </ul>
-                               )}
-                              </Col>
-                            </Row>
-                          </CardBody>
-                        </Card>
+                            onClick={this.handleArriveClick}
+                          >
+                            {this.state.arriving ? "처리 중..." : "학교 도착!"}
+                          </Button>
+                        </div>
                       )}
-                      {this.state.showPlaylist && (
-                        <Card className="mt-4 text-left">
-                          <CardBody>
-                            <h4>
-                              🎵 추천 플레이리스트
-                            </h4>
-                            <ul>
-                              {this.state.playlists?.map(
-                                (playlist, index) => (
-                                  <li key={index}>
-                                    <a
-                                      href={playlist.url}
-                                      target="_blank"
-                                      rel="noopener noreferrer"
-                                      style={{
-                                        color: "black",
-                                        textDecoration: "none",
-                                      }}
-                                    >
-                                      {playlist.title}
-                                    </a>
-                                  </li>
-                                )
-                              )}
-                            </ul>
-                          </CardBody>
-                        </Card>
-                      )}
-                      {result.routes.some(
-                        (route) => route.lateProbability <= 30
-                      ) && (
+
+                      {this.renderPointResult()}
+
+                      {this.renderPlaylist()}
+
+                      {canPlayMiniGame && (
                         <div className="text-center mt-5">
                           <Button
                             color="success"
@@ -542,15 +771,17 @@ fetch(
                               )
                             }
                           >
-                            🎮 미니게임
+                            미니게임
                           </Button>
+
                           <p className="text-white mt-3 text-center">
-                            지각 확률이 낮아 여유 시간이 있어 미니게임이 활성화되었습니다!
+                            지각 확률이 낮아 여유 시간이 있어 미니게임이
+                            활성화되었습니다!
                           </p>
                         </div>
                       )}
-                      </div>
-                    )}
+                    </div>
+                  )}
                 </Col>
               </Row>
             </Container>
