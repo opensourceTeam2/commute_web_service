@@ -1,5 +1,4 @@
 import React from "react";
-
 import {
   Button,
   Card,
@@ -30,11 +29,7 @@ class Commute extends React.Component {
     pointResult: null,
     arrivedToday: false,
     arriving: false,
-
-    // 추천 경로별 최대화/최소화 상태
-    // false 또는 없음 = 최소화 상태
-    // true = 최대화 상태
-    expandedRouteRanks: {},
+    expandedRouteRanks: {}, // 추천 경로별 최대화/최소화 상태 관리
   };
 
   componentDidMount() {
@@ -47,7 +42,7 @@ class Commute extends React.Component {
 
     const loginId = localStorage.getItem("loginId") || "guest";
 
-    fetch(`http://127.0.0.1:8000/themes?login_id=${loginId}`)
+    fetch(`[127.0.0.1](http://127.0.0.1:8000/themes?login_id=${loginId})`)
       .then((response) => response.json())
       .then((data) => {
         localStorage.setItem(
@@ -123,7 +118,7 @@ class Commute extends React.Component {
     });
 
     try {
-      const response = await fetch("http://127.0.0.1:8000/api/commute/calculate", {
+      const response = await fetch("[127.0.0.1](http://127.0.0.1:8000/api/commute/calculate)", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -161,11 +156,15 @@ class Commute extends React.Component {
         result: safeResult,
         loading: false,
       });
+
+      // 내 브랜치에 있던 고유 기능: 검색 결과를 로컬 스토리지에 로그로 남김 (병합 완료)
+      const logsKey = `commuteLogs_${loginId}`;
+      const savedLogs = JSON.parse(localStorage.getItem(logsKey)) || [];
+      localStorage.setItem(logsKey, JSON.stringify([safeResult, ...savedLogs]));
+
     } catch (error) {
       console.error(error);
-
       alert("백엔드 서버와 연결하지 못했습니다. 백엔드가 실행 중인지 확인해주세요.");
-
       this.setState({
         loading: false,
       });
@@ -201,21 +200,15 @@ class Commute extends React.Component {
 
   getSafeRoutes = () => {
     const { result } = this.state;
-
     if (!result || !Array.isArray(result.routes)) {
       return [];
     }
-
     return result.routes;
   };
 
   getFirstRoute = () => {
     const routes = this.getSafeRoutes();
-
-    if (routes.length === 0) {
-      return null;
-    }
-
+    if (routes.length === 0) return null;
     return routes[0];
   };
 
@@ -229,11 +222,9 @@ class Commute extends React.Component {
 
     try {
       const lateProbability = firstRoute.lateProbability;
-
       const response = await fetch(
-        `http://127.0.0.1:8000/playlist?late_probability=${lateProbability}`
+        `[127.0.0.1](http://127.0.0.1:8000/playlist?late_probability=${lateProbability})`
       );
-
       const data = await response.json();
 
       this.setState((prevState) => ({
@@ -260,15 +251,12 @@ class Commute extends React.Component {
     const classStartTime = result?.classStartTime || "";
     const loginId = localStorage.getItem("loginId") || "guest";
 
-    this.setState({
-      arriving: true,
-    });
+    this.setState({ arriving: true });
 
     try {
       const response = await fetch(
-        `http://127.0.0.1:8000/points?login_id=${loginId}&late_probability=${lateProbability}&commute_minutes=${commuteMinutes}&class_start_time=${classStartTime}`
+        `[127.0.0.1](http://127.0.0.1:8000/points?login_id=${loginId}&late_probability=${lateProbability}&commute_minutes=${commuteMinutes}&class_start_time=${classStartTime})`
       );
-
       const data = await response.json();
 
       this.setState({
@@ -278,11 +266,7 @@ class Commute extends React.Component {
       });
     } catch (error) {
       console.error(error);
-
-      this.setState({
-        arriving: false,
-      });
-
+      this.setState({ arriving: false });
       alert("포인트 / 뱃지 정보를 불러오지 못했습니다.");
     }
   };
@@ -316,20 +300,15 @@ class Commute extends React.Component {
       <Card
         className="shadow mb-4"
         key={routeRank}
-        style={{
-          borderRadius: "18px",
-          overflow: "hidden",
-        }}
+        style={{ borderRadius: "18px", overflow: "hidden" }}
       >
         <CardBody>
           <Row className="align-items-center">
             <Col md="7">
               <h4 className="mb-2">추천 경로 {routeRank}</h4>
-
               <p className="mb-2 text-muted">
                 <strong>경로:</strong> {routeSummary}
               </p>
-
               <p className="mb-0 text-muted">
                 <strong>예상 소요 시간:</strong> {totalMinutes}
               </p>
@@ -365,14 +344,12 @@ class Commute extends React.Component {
           {isExpanded && (
             <div className="mt-4">
               <hr />
-
               <Row>
                 <Col md="6">
                   <p className="mb-2">
                     <strong>예상 도착 시간:</strong> {expectedArrivalTime}
                   </p>
                 </Col>
-
                 <Col md="6">
                   <p className="mb-2">
                     <strong>환승 횟수:</strong> {transferCount}
@@ -401,13 +378,10 @@ class Commute extends React.Component {
                 }}
               >
                 <h6 className="mb-3">상세 이동 순서</h6>
-
                 {steps.length > 0 ? (
                   <ol className="mb-0">
                     {steps.map((step, index) => (
-                      <li key={index} className="mb-2">
-                        {step}
-                      </li>
+                      <li key={index} className="mb-2">{step}</li>
                     ))}
                   </ol>
                 ) : (
@@ -425,13 +399,11 @@ class Commute extends React.Component {
                   }}
                 >
                   <h6 className="mb-3">계산 이유</h6>
-
                   <ul className="mb-0">
                     {reasons.map((reason, index) => (
-                      <li key={index} className="mb-2">
-                        {reason}
-                      </li>
+                      <li key={index} className="mb-2">{reason}</li>
                     ))}
+次
                   </ul>
                 </div>
               )}
@@ -445,9 +417,7 @@ class Commute extends React.Component {
   renderPointResult = () => {
     const { pointResult } = this.state;
 
-    if (!pointResult) {
-      return null;
-    }
+    if (!pointResult) return null;
 
     const missions = Array.isArray(pointResult?.point_result?.missions)
       ? pointResult.point_result.missions
@@ -462,11 +432,9 @@ class Commute extends React.Component {
       <Card className="mt-4">
         <CardBody>
           <h4>포인트 / 뱃지 획득 결과</h4>
-
           <Row className="mt-4">
             <Col md="6">
               <h5>획득 포인트</h5>
-
               {missions.length > 0 ? (
                 <ul>
                   {missions.map((mission, index) => (
@@ -476,54 +444,33 @@ class Commute extends React.Component {
               ) : (
                 <p className="text-muted">수행한 미션 정보가 없습니다.</p>
               )}
-
               {earnedPoints > 0 ? (
                 <p className="mt-3">+{earnedPoints}P 획득</p>
               ) : (
-                <p className="mt-3 text-muted">
-                  이번에는 포인트를 얻지 못했어요!
-                </p>
+                <p className="mt-3 text-muted">이번에는 포인트를 얻지 못했어요!</p>
               )}
             </Col>
 
             <Col md="6">
               <h5>획득 뱃지</h5>
-
               {earnedBadges.length === 0 ? (
-                <p className="mt-3 text-muted">
-                  이번에는 뱃지를 얻지 못했어요!
-                </p>
+                <p className="mt-3 text-muted">이번에는 뱃지를 얻지 못했어요!</p>
               ) : (
                 <ul>
                   {earnedBadges.includes("여유로운 통학의 신") && (
-                    <li>
-                      여유로운 통학의 신 {badgeData.easy_success_count || 0} /
-                      30
-                    </li>
+                    <li>여유로운 통학의 신 {badgeData.easy_success_count || 0} / 30</li>
                   )}
-
                   {earnedBadges.includes("아슬아슬 마스터") && (
-                    <li>
-                      아슬아슬 마스터 {badgeData.hard_success_count || 0} / 10
-                    </li>
+                    <li>아슬아슬 마스터 {badgeData.hard_success_count || 0} / 10</li>
                   )}
-
                   {earnedBadges.includes("비를 뚫는 자") && (
-                    <li>
-                      비를 뚫는 자 {badgeData.rain_success_count || 0} / 10
-                    </li>
+                    <li>비를 뚫는 자 {badgeData.rain_success_count || 0} / 10</li>
                   )}
-
                   {earnedBadges.includes("새벽 통학생") && (
-                    <li>
-                      새벽 통학생 {badgeData.early_morning_count || 0} / 20
-                    </li>
+                    <li>새벽 통학생 {badgeData.early_morning_count || 0} / 20</li>
                   )}
-
                   {earnedBadges.includes("강철 체력") && (
-                    <li>
-                      강철 체력 {badgeData.long_distance_count || 0} / 20
-                    </li>
+                    <li>강철 체력 {badgeData.long_distance_count || 0} / 20</li>
                   )}
                 </ul>
               )}
@@ -537,15 +484,12 @@ class Commute extends React.Component {
   renderPlaylist = () => {
     const { showPlaylist, playlists } = this.state;
 
-    if (!showPlaylist) {
-      return null;
-    }
+    if (!showPlaylist) return null;
 
     return (
       <Card className="mt-4 text-left">
         <CardBody>
-          <h4>추천 플레이리스트</h4>
-
+          <h4>🎧 추천 플레이리스트</h4>
           {playlists.length > 0 ? (
             <ul>
               {playlists.map((playlist, index) => (
@@ -554,10 +498,7 @@ class Commute extends React.Component {
                     href={playlist.url}
                     target="_blank"
                     rel="noopener noreferrer"
-                    style={{
-                      color: "black",
-                      textDecoration: "none",
-                    }}
+                    style={{ color: "black", textDecoration: "none" }}
                   >
                     {playlist.title}
                   </a>
@@ -585,14 +526,11 @@ class Commute extends React.Component {
     return (
       <>
         <DemoNavbar />
-
         <main ref="main">
           <section className="section section-shaped section-lg">
             <div
               className="shape shape-style-1"
-              style={{
-                background: this.getThemeBackground(theme),
-              }}
+              style={{ background: this.getThemeBackground(theme) }}
             >
               <span />
               <span />
@@ -610,17 +548,14 @@ class Commute extends React.Component {
                   <Card className="bg-secondary shadow border-0">
                     <CardBody className="px-lg-5 py-lg-5">
                       <h3 className="mb-4">통학 도우미 실행</h3>
-
                       <p>
                         출발 위치와 수업 시작 시간을 입력하면 단국대학교까지
-                        갈 수 있는 경로 중 지각 확률이 낮은 3가지를
-                        추천합니다.
+                        갈 수 있는 경로 중 지각 확률이 낮은 3가지를 추천합니다.
                       </p>
 
                       <Form onSubmit={this.handleCalculate}>
                         <FormGroup>
                           <Label>출발 위치</Label>
-
                           <Input
                             type="text"
                             placeholder="예: 미금역, 죽전역, 수지구청역, 강남역"
@@ -633,35 +568,28 @@ class Commute extends React.Component {
 
                         <FormGroup>
                           <Label>수업 시작 시간</Label>
-
                           <Row>
                             <Col md="4">
                               <Input
                                 type="select"
                                 value={this.state.classStartPeriod}
                                 onChange={(e) =>
-                                  this.setState({
-                                    classStartPeriod: e.target.value,
-                                  })
+                                  this.setState({ classStartPeriod: e.target.value })
                                 }
                               >
                                 <option value="오전">오전</option>
                                 <option value="오후">오후</option>
                               </Input>
                             </Col>
-
                             <Col md="8">
                               <Input
                                 type="select"
                                 value={this.state.classStartClock}
                                 onChange={(e) =>
-                                  this.setState({
-                                    classStartClock: e.target.value,
-                                  })
+                                  this.setState({ classStartClock: e.target.value })
                                 }
                               >
                                 <option value="">시간을 선택하세요</option>
-
                                 {timeOptions.map((time) => (
                                   <option key={time} value={time}>
                                     {time}
@@ -688,24 +616,20 @@ class Commute extends React.Component {
                   {result && (
                     <div className="mt-5">
                       <h3 className="text-white mb-4">추천 결과</h3>
-
                       <Card className="shadow mb-4">
                         <CardBody>
                           <p>
                             <strong>출발 위치:</strong>{" "}
                             {result?.startLocation || "정보 없음"}
                           </p>
-
                           <p>
                             <strong>도착지:</strong>{" "}
                             {result?.destination || "정보 없음"}
                           </p>
-
                           <p>
                             <strong>수업 시작 시간:</strong>{" "}
                             {result?.classStartTime || "정보 없음"}
                           </p>
-
                           <p className="mb-0">
                             <strong>조회 시간:</strong>{" "}
                             {result?.checkedAt || "정보 없음"}
@@ -737,12 +661,16 @@ class Commute extends React.Component {
                               width: "70px",
                               height: "70px",
                               borderRadius: "50%",
-                              fontSize: "28px",
+                              fontSize: "40px",
                               padding: "0",
-                              backgroundColor: "white",
+                              backgroundColor: "transparent",
                               border: "none",
+                              boxShadow: "none",
+                              outline: "none",
                             }}
-                          />
+                          >
+                            🎧
+                          </Button>
                         </div>
                       )}
 
@@ -774,14 +702,13 @@ class Commute extends React.Component {
                             color="success"
                             onClick={() =>
                               window.open(
-                                "http://127.0.0.1:8000/game",
+                                "[127.0.0.1](http://127.0.0.1:8000/game)",
                                 "_blank"
                               )
                             }
                           >
                             미니게임
                           </Button>
-
                           <p className="text-white mt-3 text-center">
                             지각 확률이 낮아 여유 시간이 있어 미니게임이
                             활성화되었습니다!
@@ -795,7 +722,6 @@ class Commute extends React.Component {
             </Container>
           </section>
         </main>
-
         <SimpleFooter />
       </>
     );
