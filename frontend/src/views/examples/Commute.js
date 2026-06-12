@@ -32,6 +32,7 @@ class Commute extends React.Component {
     pointResult: null,
     arrivedToday: false,
     arriving: false,
+    expandedRouteRanks: {},
   };
 
   componentDidMount() {
@@ -98,6 +99,7 @@ fetch(
       showPlaylist: false,
       playlists: [],
       arrivedToday: false,
+      expandedRouteRanks: {},
     });
 
     try {
@@ -133,55 +135,94 @@ fetch(
     }
   };
 
+    toggleRouteDetail = (routeRank) => {
+    this.setState((prevState) => ({
+      expandedRouteRanks: {
+        ...prevState.expandedRouteRanks,
+        [routeRank]: !prevState.expandedRouteRanks[routeRank],
+      },
+    }));
+  };
+
   renderRouteCard = (route) => {
+    const routeRank = route.rank;
+    const isExpanded = !!this.state.expandedRouteRanks[routeRank];
+
+    const steps = Array.isArray(route.steps) ? route.steps : [];
+    const reasons = Array.isArray(route.reasons) ? route.reasons : [];
+
     return (
       <Card className="shadow mb-4" key={route.rank}>
         <CardBody>
-          <h4 className="mb-3">
-            추천 경로 {route.rank}
-          </h4>
+          <Row className="align-items-center">
+            <Col md="8">
+              <h4>추천 경로 {route.rank}</h4>
 
-          <p className="mb-2">
-            <strong>경로:</strong> {route.routeSummary}
-          </p>
+              <p>
+                <strong>경로:</strong> {route.routeSummary}
+              </p>
 
-          <p className="mb-2">
-            <strong>예상 소요 시간:</strong> {route.totalMinutes}분
-          </p>
+              <p>
+                <strong>예상 소요 시간:</strong> {route.totalMinutes}분
+              </p>
 
-          <p className="mb-2">
-            <strong>예상 도착 시간:</strong> {route.expectedArrivalTime}
-          </p>
+              <p className="mb-md-0">
+                <strong>지각 확률:</strong> {route.lateProbability}%
+              </p>
+            </Col>
 
-          <p className="mb-2">
-            <strong>환승 횟수:</strong> {route.transferCount}회
-          </p>
+            <Col md="4" className="text-md-right mt-3 mt-md-0">
+              <Button
+                color={isExpanded ? "secondary" : "primary"}
+                size="sm"
+                onClick={() => this.toggleRouteDetail(routeRank)}
+              >
+                {isExpanded ? "최소화" : "최대화"}
+              </Button>
+            </Col>
+          </Row>
 
-          <p className="mb-2">
-            <strong>지각 확률:</strong> {route.lateProbability}%
-          </p>
-
-          <p className="mb-3">
-            <strong>안내:</strong> {route.statusMessage}
-          </p>
-
-          <hr />
-
-          <h6>상세 이동 순서</h6>
-          <ol>
-            {route.steps.map((step, index) => (
-              <li key={index}>{step}</li>
-            ))}
-          </ol>
-
-          {route.reasons && route.reasons.length > 0 && (
+          {isExpanded && (
             <>
-              <h6>계산 이유</h6>
-              <ul>
-                {route.reasons.map((reason, index) => (
-                  <li key={index}>{reason}</li>
-                ))}
-              </ul>
+              <hr />
+
+              <p>
+                <strong>예상 도착 시간:</strong> {route.expectedArrivalTime}
+              </p>
+
+              <p>
+                <strong>환승 횟수:</strong> {route.transferCount}회
+              </p>
+
+              <p>
+                <strong>안내:</strong> {route.statusMessage}
+              </p>
+
+              <hr />
+
+              <h6>상세 이동 순서</h6>
+
+              {steps.length > 0 ? (
+                <ol>
+                  {steps.map((step, index) => (
+                    <li key={index}>{step}</li>
+                  ))}
+                </ol>
+              ) : (
+                <p className="text-muted">상세 이동 순서가 없습니다.</p>
+              )}
+
+              {reasons.length > 0 && (
+                <>
+                  <h6>계산 이유</h6>
+
+                  <ul>
+                    {reasons.map((reason, index) => (
+                      <li key={index}>{reason}</li>
+                    ))}
+                  </ul>
+                </>
+              )}
             </>
           )}
         </CardBody>
@@ -344,13 +385,15 @@ fetch(
                             width: "70px",
                             height: "70px",
                             borderRadius: "50%",
-                            fontSize: "28px",
+                            fontSize: "40px",
                             padding: "0",
-                            backgroundColor: "white",
+                            backgroundColor: "transparent",
                             border: "none",
+                            boxShadow: "none",
+                            outline: "none",
                           }}
                         >
-                          🎵
+                          🎧
                         </Button>
                       </div>
                       <div className="text-center mt-5"
@@ -505,7 +548,7 @@ fetch(
                         <Card className="mt-4 text-left">
                           <CardBody>
                             <h4>
-                              🎵 추천 플레이리스트
+                              🎧 추천 플레이리스트
                             </h4>
                             <ul>
                               {this.state.playlists?.map(

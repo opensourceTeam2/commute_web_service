@@ -16,7 +16,7 @@ def calculate_points(
         late_probability <= 20
         and is_arrived
     ):
-        earned_points += 10
+        earned_points += 40
         mission_list.append(
             "여유로운 통학 성공"
         )
@@ -28,7 +28,7 @@ def calculate_points(
         late_probability >= 50
         and is_arrived
     ):
-        earned_points += 30
+        earned_points += 20
         mission_list.append(
             "아슬아슬 통학 성공"
         )
