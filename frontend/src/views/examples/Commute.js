@@ -379,10 +379,18 @@ class Commute extends React.Component {
                   </p>
                 </Col>
               </Row>
-
+        
               <p className="mb-3">
                 <strong>안내:</strong> {statusMessage}
               </p>
+
+              {route.guideMessages && route.guideMessages.length > 0 && (
+                <p className="mb-3">
+                  <strong>날씨 안내:</strong> {route.guideMessages.join(" ")}
+                </p>
+              )}
+
+              <hr />
 
               <div
                 style={{

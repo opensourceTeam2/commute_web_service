@@ -1,30 +1,7 @@
 from datetime import datetime, timedelta
 from app.clients.kakao_local_api import get_place_coordinate
 from app.clients.odsay_api import search_public_transit_routes
-
-try:
-    from app.services.weather import create_guide_message
-except ImportError:
-    # weather.py import가 안 될 경우를 대비한 기본 안내문구 함수
-    def create_guide_message(weather=None, fine_dust=None):
-        messages = []
-
-        weather_text = str(weather).lower() if weather else ""
-        fine_dust_text = str(fine_dust).lower() if fine_dust else ""
-
-        if "rain" in weather_text or "비" in weather_text:
-            messages.append("우산을 챙기세요.")
-
-        if "snow" in weather_text or "눈" in weather_text:
-            messages.append("눈이 오니 이동 시간을 여유 있게 잡으세요.")
-
-        if fine_dust_text == "bad" or fine_dust_text == "나쁨":
-            messages.append("미세먼지가 나쁘니 마스크를 착용하세요.")
-
-        if not messages:
-            messages.append("특별한 안내 사항 없음")
-
-        return messages
+from app.clients.guide.guide_message import make_guide_message
 
 
 def parse_class_start_time(class_start_time):
@@ -146,10 +123,34 @@ def calculate_lateness_probability(
     else:
         status_message = "지각 가능성이 높습니다. 다른 경로를 고려하세요."
 
+    try:
+        guide_messages = make_guide_message()
+    except Exception:
+        guide_messages = []
+
+        weather_text = str(weather).lower() if weather else ""
+        fine_dust_text = str(fine_dust).lower() if fine_dust else ""
+
+        if "rain" in weather_text or "비" in weather_text:
+            guide_messages.append("비가 오니 우산을 챙기세요.")
+
+        if "snow" in weather_text or "눈" in weather_text:
+            guide_messages.append("눈이 오니 이동 시간을 여유 있게 잡으세요.")
+
+        if "fog" in weather_text or "안개" in weather_text:
+            guide_messages.append("안개로 인해 이동이 지연될 수 있습니다.")
+
+        if fine_dust_text == "bad" or fine_dust_text == "나쁨":
+            guide_messages.append("미세먼지가 나쁘니 마스크를 착용하세요.")
+
+        if not guide_messages:
+            guide_messages.append("특별한 날씨 안내 사항이 없습니다.")
+
     return {
         "lateProbability": probability,
         "statusMessage": status_message,
         "reasons": reasons,
+        "guideMessages": guide_messages,
         "detail": {
             "totalMinutes": total_minutes,
             "remainingMinutes": remaining_minutes,
@@ -160,7 +161,6 @@ def calculate_lateness_probability(
             "fineDust": fine_dust,
         },
     }
-
 
 def calculate_lateness_from_api_data(
     class_start_time,
