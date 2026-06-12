@@ -283,7 +283,7 @@ export default function Badge() {
                       </strong>
                       <br />
                       지각 확률 20% 이하 통학 성공
-                      (+10P)
+                      (+40P)
                     </li>
                     <br />
                     <li>
@@ -292,7 +292,7 @@ export default function Badge() {
                       </strong>
                       <br />
                       지각 확률 50% 이상 통학 성공
-                      (+30P)
+                      (+20P)
                    </li>
                     <br />
                    <li>
@@ -361,6 +361,9 @@ export default function Badge() {
                       편도 1시간 이상 통학 20회 성공
                     </li>
                   </ul>
+                  <p className="mt-4 text-muted">
+                    * 뱃지 획득 시 추가 +50P 지급
+                  </p>
                 </Col>
               </Row>
             </CardBody>
