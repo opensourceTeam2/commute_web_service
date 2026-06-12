@@ -130,6 +130,12 @@ class Commute extends React.Component {
             <strong>안내:</strong> {route.statusMessage}
           </p>
 
+          {route.guideMessages && route.guideMessages.length > 0 && (
+            <p className="mb-3">
+              <strong>날씨 안내:</strong> {route.guideMessages.join(" ")}
+            </p>
+          )}
+
           <hr />
 
           <h6>상세 이동 순서</h6>
