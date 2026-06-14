@@ -31,13 +31,92 @@ import DemoNavbar from "components/Navbars/DemoNavbar.js";
 import CardsFooter from "components/Footers/CardsFooter.js";
 
 class Landing extends React.Component {
+  state = {
+    weatherAirInfo: null,
+    weatherAirLoading: true,
+  };
+
   componentDidMount() {
     document.documentElement.scrollTop = 0;
     document.scrollingElement.scrollTop = 0;
     this.refs.main.scrollTop = 0;
+    this.fetchWeatherAirInfo();
   }
 
+  fetchWeatherAirInfo = async () => {
+    try {
+      const response = await fetch("http://127.0.0.1:8000/api/main/weather-air");
+      const data = await response.json();
+
+      this.setState({
+        weatherAirInfo: data,
+        weatherAirLoading: false,
+      });
+    } catch (error) {
+      this.setState({
+        weatherAirInfo: null,
+        weatherAirLoading: false,
+      });
+    }
+  };
+
   render() {
+    const { weatherAirInfo, weatherAirLoading } = this.state;
+
+    const weather =
+      weatherAirInfo && weatherAirInfo.weather
+        ? weatherAirInfo.weather
+        : {};
+
+    const air =
+      weatherAirInfo && weatherAirInfo.air
+        ? weatherAirInfo.air
+        : {};
+
+    const rainPercent = weather.rain_percent || 0;
+    const rainType = weather.rain_type || "없음";
+
+    const weatherIcon =
+      rainType === "비" || rainType === "비/눈"
+        ? "☔"
+        : rainType === "눈"
+        ? "❄️"
+        : rainPercent >= 30
+        ? "🌦️"
+        : "☀️";
+
+    const airStatusMap = {
+      good: "좋음",
+      normal: "보통",
+      bad: "나쁨",
+      very_bad: "매우 나쁨",
+      unknown: "정보 없음",
+    };
+
+    const airStatus = airStatusMap[air.status] || "정보 없음";
+
+    const airIcon =
+      air.status === "bad" || air.status === "very_bad"
+        ? "😷"
+        : air.status === "normal"
+        ? "🌫️"
+        : air.status === "good"
+        ? "🌿"
+        : "❔";
+    
+    const mainWeatherMessage =
+      rainType === "없음" && rainPercent < 30 && air.status === "good"
+        ? "오늘은 날씨도 좋고 대기질도 좋네요! 수업 끝나고 산책 어떠세요?"
+        : rainType === "눈"
+        ? "눈 예보가 있어요. 길이 미끄러울 수 있으니 조심해서 이동하세요."
+        : rainType === "비" || rainType === "비/눈" || rainPercent >= 60
+        ? "비 소식이 있어요. 이동할 때 우산을 챙기면 좋겠어요."
+        : air.status === "bad" || air.status === "very_bad"
+        ? "대기질이 좋지 않아요. 마스크를 챙기고 오래 걷는 건 피하는 게 좋아요."
+        : rainPercent >= 30
+        ? "날씨가 조금 애매해요. 혹시 모르니 작은 우산을 챙겨보세요."
+        : "오늘 통학하기 무난한 날이에요. 여유 있게 출발해보세요!";
+
     return (
       <>
         <DemoNavbar />
@@ -66,11 +145,71 @@ class Landing extends React.Component {
                         <span>지각 확률을 확인하세요</span>
                       </h1>
 
-                      <p className="lead text-white">
-                        자주 이용하는 정류장과 버스 번호를 설정하면,
-                        버스 도착 예정 시간과 지각 가능성을 한눈에 확인할 수
-                        있습니다.
-                      </p>
+                      <Card className="shadow border-0 mt-4 mb-4">
+                        <CardBody className="py-4">
+                          <h6 className="text-uppercase text-muted mb-3">
+                            오늘 통학 날씨 안내
+                          </h6>
+
+                          {weatherAirLoading ? (
+                            <p className="mb-0 text-muted">
+                              날씨와 대기질 정보를 불러오는 중입니다.
+                            </p>
+                          ) : (
+                            <>
+                              <Row>
+                                <Col sm="6" className="mb-3 mb-sm-0">
+                                  <div className="d-flex align-items-center">
+                                    <div
+                                      className="rounded-circle bg-info text-white d-flex align-items-center justify-content-center mr-3"
+                                      style={{
+                                        width: "48px",
+                                        height: "48px",
+                                        fontSize: "24px",
+                                      }}
+                                    >
+                                      {weatherIcon}
+                                    </div>
+                                    <div>
+                                      <h6 className="mb-1">오늘 날씨</h6>
+                                      <p className="mb-0 text-muted">
+                                        강수확률 {rainPercent}% · {rainType}
+                                      </p>
+                                    </div>
+                                  </div>
+                                </Col>
+
+                                <Col sm="6">
+                                  <div className="d-flex align-items-center">
+                                    <div
+                                      className="rounded-circle bg-success text-white d-flex align-items-center justify-content-center mr-3"
+                                      style={{
+                                        width: "48px",
+                                        height: "48px",
+                                        fontSize: "24px",
+                                      }}
+                                    >
+                                      {airIcon}
+                                    </div>
+                                    <div>
+                                      <h6 className="mb-1">오늘 대기질</h6>
+                                      <p className="mb-0 text-muted">
+                                        미세먼지 {airStatus}
+                                        {air.pm10 ? ` · PM10 ${air.pm10}` : ""}
+                                      </p>
+                                    </div>
+                                  </div>
+                                </Col>
+                              </Row>
+
+                              <p className="mt-3 mb-0 text-muted">
+                                {mainWeatherMessage}
+                              </p>
+                            </>
+                          )}
+
+                        </CardBody>
+                      </Card>
 
                       <div className="btn-wrapper">
                         <Button
@@ -121,73 +260,6 @@ class Landing extends React.Component {
               </div>
             </section>
           </div>
-
-          <section className="section section-lg pt-lg-0 mt--200">
-            <Container>
-              <Row className="justify-content-center">
-                <Col lg="12">
-                  <Row className="row-grid">
-                    <Col lg="4">
-                      <Card className="card-lift--hover shadow border-0">
-                        <CardBody className="py-5">
-                          <div className="icon icon-shape icon-shape-primary rounded-circle mb-4">
-                            <i className="ni ni-bus-front-12" />
-                          </div>
-
-                          <h6 className="text-primary text-uppercase">
-                            버스 도착 예정 시간
-                          </h6>
-
-                          <p className="description mt-3">
-                            설정한 정류장과 버스 번호를 기준으로 도착 예정
-                            시간을 확인할 수 있습니다.
-                          </p>
-                        </CardBody>
-                      </Card>
-                    </Col>
-
-                    <Col lg="4">
-                      <Card className="card-lift--hover shadow border-0">
-                        <CardBody className="py-5">
-                          <div className="icon icon-shape icon-shape-success rounded-circle mb-4">
-                            <i className="ni ni-watch-time" />
-                          </div>
-
-                          <h6 className="text-success text-uppercase">
-                            지각 확률 계산
-                          </h6>
-
-                          <p className="description mt-3">
-                            수업 시작 시간과 예상 도착 정보를 바탕으로 지각
-                            가능성을 계산합니다.
-                          </p>
-                        </CardBody>
-                      </Card>
-                    </Col>
-
-                    <Col lg="4">
-                      <Card className="card-lift--hover shadow border-0">
-                        <CardBody className="py-5">
-                          <div className="icon icon-shape icon-shape-warning rounded-circle mb-4">
-                            <i className="ni ni-single-copy-04" />
-                          </div>
-
-                          <h6 className="text-warning text-uppercase">
-                            조회 로그 저장
-                          </h6>
-
-                          <p className="description mt-3">
-                            사용자가 조회한 통학 도우미 결과를 저장하고, 로그
-                            페이지에서 다시 확인할 수 있습니다.
-                          </p>
-                        </CardBody>
-                      </Card>
-                    </Col>
-                  </Row>
-                </Col>
-              </Row>
-            </Container>
-          </section>
 
           <section className="section">
             <Container>
