@@ -12,6 +12,7 @@ from app.clients.extra.playlist import recommend_playlist
 from app.clients.extra.points import calculate_points
 from app.clients.extra.badges import update_badges
 from app.clients.weather import get_weather
+from app.clients.guide.air_quality import get_air_data
 from app.db import database
 
 
@@ -56,6 +57,30 @@ class LoginRequest(BaseModel):
 def read_root():
     return {
         "message": "Commute Web Service Backend"
+    }
+
+@app.get("/api/main/weather-air")
+def get_main_weather_air():
+    # 단국대학교 죽전캠퍼스 주변 좌표
+    nx = 62
+    ny = 123
+
+    weather_result = get_weather(nx, ny)
+
+    if weather_result and len(weather_result) > 0:
+        weather = weather_result[0]
+    else:
+        weather = {
+            "forecast_time": None,
+            "rain_percent": 0,
+            "rain_type": "없음",
+        }
+
+    air = get_air_data()
+
+    return {
+        "weather": weather,
+        "air": air,
     }
 
 
