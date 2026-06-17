@@ -118,7 +118,7 @@ class Commute extends React.Component {
     });
 
     try {
-      const response = await fetch("(http://127.0.0.1:8000/api/commute/calculate)", {
+      const response = await fetch("http://127.0.0.1:8000/api/commute/calculate", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -403,7 +403,6 @@ class Commute extends React.Component {
                     {reasons.map((reason, index) => (
                       <li key={index} className="mb-2">{reason}</li>
                     ))}
-次
                   </ul>
                 </div>
               )}
