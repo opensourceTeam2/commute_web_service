@@ -7,6 +7,9 @@ def create_guide_message(weather=None, fine_dust=None):
 	if weather == "snow":
 		messages.append("눈이 오니 이동 시간을 여유 있게 잡으세요.")
 
+	if fine_dust == "very_bad":
+		messages.append("미세먼지가 매우 나쁘니 외출 시 마스크를 착용하고 되도록 외출을 자제해주세요.")
+
 	if fine_dust == "bad":
 		messages.append("미세먼지가 나쁘니 마스크를 착용하세요.")
 
