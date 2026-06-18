@@ -42,7 +42,7 @@ class Commute extends React.Component {
 
     const loginId = localStorage.getItem("loginId") || "guest";
 
-    fetch(`(http://127.0.0.1:8000/themes?login_id=${loginId})`)
+    fetch(`http://127.0.0.1:8000/themes?login_id=${loginId}`)
       .then((response) => response.json())
       .then((data) => {
         localStorage.setItem(
@@ -223,7 +223,7 @@ class Commute extends React.Component {
     try {
       const lateProbability = firstRoute.lateProbability;
       const response = await fetch(
-        `(http://127.0.0.1:8000/playlist?late_probability=${lateProbability})`
+        `http://127.0.0.1:8000/playlist?late_probability=${lateProbability}`
       );
       const data = await response.json();
 
@@ -255,7 +255,7 @@ class Commute extends React.Component {
 
     try {
       const response = await fetch(
-        `(http://127.0.0.1:8000/points?login_id=${loginId}&late_probability=${lateProbability}&commute_minutes=${commuteMinutes}&class_start_time=${classStartTime})`
+        `http://127.0.0.1:8000/points?login_id=${loginId}&late_probability=${lateProbability}&commute_minutes=${commuteMinutes}&class_start_time=${classStartTime}`
       );
       const data = await response.json();
 
@@ -701,7 +701,7 @@ class Commute extends React.Component {
                             color="success"
                             onClick={() =>
                               window.open(
-                                "(http://127.0.0.1:8000/game)",
+                                "http://127.0.0.1:8000/game",
                                 "_blank"
                               )
                             }
